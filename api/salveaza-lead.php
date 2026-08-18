@@ -1,6 +1,8 @@
 <?php
 // Salveaza cererea de oferta (lead) din calculatorul de baterii AFM.
-// Scrie in leads.csv (protejat prin .htaccess) si trimite email de notificare.
+// Scrie in leads.csv, genereaza oferta PDF cu numar de inregistrare,
+// o arhiveaza in api/oferte/, o trimite clientului pe email cu atasament
+// si notifica firma. Registrul ofertelor apare in admin (tab Oferte generate).
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -89,9 +91,122 @@ if (!$exista) {
 fputcsv($fh, $rand);
 fclose($fh);
 
-// trimite email de notificare (daca esueaza, lead-ul ramane oricum in CSV)
-$subiect = 'Lead nou baterii AFM: ' . $nume . ' - ' . (isset($date['baterie']) ? $date['baterie'] : '');
-$mesaj = "Cerere noua din calculatorul de baterii AFM:\n\n";
+// =====================================================================
+// Genereaza oferta PDF cu numar de inregistrare, o arhiveaza si o trimite
+// clientului pe email. Daca oricare pas esueaza, lead-ul ramane salvat.
+// =====================================================================
+$oferta_info = null;
+$email_client_trimis = false;
+$baterie_id = isset($date['baterie_id']) ? trim($date['baterie_id']) : '';
+
+if ($baterie_id !== '' && $baterie_id !== 'personalizat') {
+    require_once __DIR__ . '/oferta-pdf.php';
+
+    // catalogul curent (aceeasi logica precum catalog.php)
+    $catalog = require __DIR__ . '/catalog-default.php';
+    $fisCat = __DIR__ . '/catalog.json';
+    if (file_exists($fisCat)) {
+        $salvat = json_decode(file_get_contents($fisCat), true);
+        if (is_array($salvat) && isset($salvat['baterii']) && is_array($salvat['baterii'])) {
+            $catalog['baterii'] = $salvat['baterii'];
+        }
+    }
+
+    // folderul arhivei de oferte (protejat de acces direct)
+    $dirOferte = __DIR__ . '/oferte';
+    if (!is_dir($dirOferte)) {
+        @mkdir($dirOferte, 0755, true);
+        @file_put_contents($dirOferte . '/.htaccess', "Require all denied\n");
+    }
+
+    // registru cu blocare: numarul urmator = cate oferte exista + 1
+    $fisReg = $dirOferte . '/registru.json';
+    $fh = fopen($fisReg, 'c+');
+    if ($fh !== false && flock($fh, LOCK_EX)) {
+        $continutReg = stream_get_contents($fh);
+        $registru = json_decode($continutReg, true);
+        if (!is_array($registru)) { $registru = array(); }
+        $nrOferta = count($registru) + 1;
+        $nrText = $nrOferta . '/' . date('d.m.Y');
+
+        $rezultat = oferta_pdf_genereaza($date, $catalog, $nrText);
+        if (!isset($rezultat['eroare'])) {
+            $numeFisier = sprintf('oferta-%04d.pdf', $nrOferta);
+            if (file_put_contents($dirOferte . '/' . $numeFisier, $rezultat['pdf']) !== false) {
+                $token = bin2hex(random_bytes(16));
+                $registru[] = array(
+                    'nr' => $nrOferta,
+                    'nr_text' => $nrText,
+                    'data_ora' => date('Y-m-d H:i:s'),
+                    'nume' => $nume,
+                    'telefon' => $telefon,
+                    'email' => $email,
+                    'judet' => isset($date['judet']) ? $date['judet'] : '',
+                    'localitate' => isset($date['localitate']) ? $date['localitate'] : '',
+                    'baterie_id' => $baterie_id,
+                    'baterie' => $rezultat['meta']['baterie'],
+                    'capacitate_kwh' => $rezultat['meta']['capacitate_kwh'],
+                    'valoare_totala' => $rezultat['meta']['valoare_totala'],
+                    'finantare_afm' => $rezultat['meta']['finantare_afm'],
+                    'contributie_client' => $rezultat['meta']['contributie_client'],
+                    'punctaj' => $rezultat['meta']['punctaj'],
+                    'fisier' => $numeFisier,
+                    'token' => $token,
+                );
+                ftruncate($fh, 0);
+                rewind($fh);
+                fwrite($fh, json_encode($registru, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                fflush($fh);
+
+                $oferta_info = array(
+                    'nr' => $nrOferta,
+                    'nr_text' => $nrText,
+                    'url' => 'api/descarca-oferta.php?t=' . $token,
+                );
+
+                // email catre CLIENT cu oferta atasata (multipart MIME)
+                $numePdfClient = 'Oferta-iDNA-Power-nr-' . $nrOferta . '.pdf';
+                $granita = 'b' . md5(uniqid('', true));
+                $subiectClient = '=?UTF-8?B?' . base64_encode('Oferta dvs. iDNA Power nr. ' . $nrText . ' - sistem de stocare a energiei') . '?=';
+                $corpText = "Buna ziua, " . $nume . ",\n\n"
+                    . "Va multumim pentru interesul acordat! Atasat gasiti oferta dvs. nr. " . $nrText
+                    . " pentru " . $rezultat['meta']['baterie'] . ".\n\n"
+                    . "Pe scurt:\n"
+                    . "  - Valoare totala proiect: " . nr_ro($rezultat['meta']['valoare_totala'], 0) . " lei (TVA inclusa)\n"
+                    . "  - Finantare AFM: " . nr_ro($rezultat['meta']['finantare_afm'], 0) . " lei\n"
+                    . "  - Contributia dvs.: " . nr_ro($rezultat['meta']['contributie_client'], 0) . " lei\n"
+                    . "  - Punctaj estimat: " . nr_ro($rezultat['meta']['punctaj'], 1) . " / 100\n\n"
+                    . "In paginile ofertei aveti si datele exacte pentru inscrierea in programul AFM, documentele necesare si pasii urmatori.\n\n"
+                    . "Va contactam in cel mai scurt timp. Pentru orice intrebare: " . $EMAIL_NOTIFICARE . "\n\n"
+                    . "Cu stima,\nEchipa iDNA Power\n";
+                $anteteClient = 'From: iDNA Power <' . $EMAIL_NOTIFICARE . '>' . "\r\n"
+                    . 'Reply-To: ' . $EMAIL_NOTIFICARE . "\r\n"
+                    . 'MIME-Version: 1.0' . "\r\n"
+                    . 'Content-Type: multipart/mixed; boundary="' . $granita . '"';
+                $corpMime = '--' . $granita . "\r\n"
+                    . 'Content-Type: text/plain; charset=utf-8' . "\r\n"
+                    . 'Content-Transfer-Encoding: 8bit' . "\r\n\r\n"
+                    . $corpText . "\r\n"
+                    . '--' . $granita . "\r\n"
+                    . 'Content-Type: application/pdf; name="' . $numePdfClient . '"' . "\r\n"
+                    . 'Content-Transfer-Encoding: base64' . "\r\n"
+                    . 'Content-Disposition: attachment; filename="' . $numePdfClient . '"' . "\r\n\r\n"
+                    . chunk_split(base64_encode($rezultat['pdf'])) . "\r\n"
+                    . '--' . $granita . '--';
+                $email_client_trimis = @mail($email, $subiectClient, $corpMime, $anteteClient);
+            }
+        }
+        flock($fh, LOCK_UN);
+        fclose($fh);
+    } elseif ($fh !== false) {
+        fclose($fh);
+    }
+}
+
+// email de notificare catre firma (daca esueaza, lead-ul ramane oricum in CSV)
+$subiect = 'Lead nou baterii AFM' . ($oferta_info ? ' - oferta nr. ' . $oferta_info['nr_text'] : '') . ': ' . $nume . ' - ' . (isset($date['baterie']) ? $date['baterie'] : '');
+$mesaj = "Cerere noua din calculatorul de baterii AFM"
+    . ($oferta_info ? " (oferta nr. " . $oferta_info['nr_text'] . ", trimisa clientului: " . ($email_client_trimis ? 'DA' : 'NU') . ")" : '') . ":\n\n";
 foreach ($campuri as $c) {
     $val = isset($date[$c]) ? $date[$c] : '';
     if (is_bool($val)) { $val = $val ? 'da' : 'nu'; }
@@ -104,4 +219,4 @@ $antete = 'From: calculator@idnapower.ro' . "\r\n" .
           'Content-Type: text/plain; charset=utf-8';
 @mail($EMAIL_NOTIFICARE, $subiect, $mesaj, $antete);
 
-echo json_encode(array('ok' => true));
+echo json_encode(array('ok' => true, 'oferta' => $oferta_info, 'email_trimis' => $email_client_trimis));

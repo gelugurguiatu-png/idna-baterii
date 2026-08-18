@@ -73,6 +73,7 @@
     <!-- TABURI -->
     <div class="flex gap-2 mb-4" x-show="tab!=='parola'">
       <button @click="tab='baterii'" :class="tab==='baterii' ? 'bg-slate-900 text-white' : 'bg-white'" class="px-4 py-2 rounded-lg font-medium shadow-sm">Baterii</button>
+      <button @click="tab='oferte'; incarcaOferte()" :class="tab==='oferte' ? 'bg-slate-900 text-white' : 'bg-white'" class="px-4 py-2 rounded-lg font-medium shadow-sm">Oferte generate</button>
       <button x-show="rol==='admin'" @click="tab='utilizatori'; incarcaUtilizatori()" :class="tab==='utilizatori' ? 'bg-slate-900 text-white' : 'bg-white'" class="px-4 py-2 rounded-lg font-medium shadow-sm">Operatori</button>
     </div>
 
@@ -139,6 +140,65 @@
       </div>
     </section>
 
+    <!-- TAB OFERTE GENERATE -->
+    <section x-show="tab==='oferte'">
+
+      <!-- grafic: oferte per tip de baterie -->
+      <div class="bg-white rounded-xl shadow p-6 mb-4">
+        <h2 class="font-bold mb-1">Oferte pe tip de baterie</h2>
+        <p class="text-xs text-slate-500 mb-4"><span x-text="oferte.length"></span> oferte generate în total — util pentru planificarea stocurilor.</p>
+        <div class="space-y-2" x-show="graficOferte().length > 0">
+          <template x-for="g in graficOferte()" :key="g.baterie">
+            <div class="flex items-center gap-3">
+              <div class="w-56 text-sm text-slate-600 truncate text-right" x-text="g.baterie" :title="g.baterie"></div>
+              <div class="flex-1 bg-slate-100 rounded-full h-6 overflow-hidden">
+                <div class="bg-emerald-500 h-6 rounded-full flex items-center justify-end pr-2 text-white text-xs font-bold min-w-[2rem]"
+                  :style="'width:' + Math.max(8, g.nr / graficOferte()[0].nr * 100) + '%'" x-text="g.nr"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+        <p class="text-sm text-slate-400" x-show="oferte.length === 0">Nu există încă oferte generate.</p>
+      </div>
+
+      <!-- lista ofertelor -->
+      <div class="bg-white rounded-xl shadow p-6 overflow-x-auto">
+        <h2 class="font-bold mb-3">Lista ofertelor (cele mai noi primele)</h2>
+        <table class="w-full text-sm min-w-[900px]">
+          <thead>
+            <tr class="text-left text-slate-500 border-b">
+              <th class="py-2 pr-2">Nr.</th>
+              <th class="pr-2">Data</th>
+              <th class="pr-2">Nume</th>
+              <th class="pr-2">Telefon</th>
+              <th class="pr-2">E-mail</th>
+              <th class="pr-2">Localitate</th>
+              <th class="pr-2">Baterie</th>
+              <th class="pr-2 text-right">Contribuție client</th>
+              <th class="pr-2 text-right">Punctaj</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="o in oferte" :key="o.nr">
+              <tr class="border-b hover:bg-slate-50">
+                <td class="py-2 pr-2 font-bold" x-text="o.nr_text"></td>
+                <td class="pr-2 text-slate-500 whitespace-nowrap" x-text="o.data_ora.slice(0, 16)"></td>
+                <td class="pr-2 font-medium" x-text="o.nume"></td>
+                <td class="pr-2 whitespace-nowrap"><a :href="'tel:' + o.telefon" class="text-emerald-700 underline" x-text="o.telefon"></a></td>
+                <td class="pr-2"><a :href="'mailto:' + o.email" class="text-emerald-700 underline" x-text="o.email"></a></td>
+                <td class="pr-2" x-text="(o.localitate || '') + (o.judet ? ', ' + o.judet : '')"></td>
+                <td class="pr-2" x-text="o.baterie"></td>
+                <td class="pr-2 text-right whitespace-nowrap" x-text="Number(o.contributie_client).toLocaleString('ro-RO') + ' lei'"></td>
+                <td class="pr-2 text-right font-bold" x-text="Number(o.punctaj).toFixed(1)"></td>
+                <td class="text-right"><a :href="'../api/descarca-oferta.php?t=' + o.token" class="text-emerald-700 underline whitespace-nowrap">PDF ⬇</a></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- TAB OPERATORI -->
     <section x-show="tab==='utilizatori'" class="max-w-2xl">
       <div class="bg-white rounded-xl shadow p-6">
@@ -198,6 +258,7 @@ function admin() {
     utilizatori: [],
     utilizatorNou: { utilizator: '', parola: '', rol: 'operator' },
     utilizatoriEroare: '',
+    oferte: [],
 
     async init() {
       // daca exista sesiune activa, incercam direct sa incarcam catalogul
@@ -309,6 +370,23 @@ function admin() {
         this.arataMesaj('Eroare la salvare: ' + e.message, false);
       }
       this.seIncarca = false;
+    },
+
+    async incarcaOferte() {
+      const r = await fetch('../api/admin-oferte.php');
+      const j = await r.json();
+      if (j.ok) this.oferte = j.oferte;
+    },
+
+    // agregare pentru grafic: numar de oferte per tip de baterie, descrescator
+    graficOferte() {
+      const contor = {};
+      for (const o of this.oferte) {
+        contor[o.baterie] = (contor[o.baterie] || 0) + 1;
+      }
+      return Object.entries(contor)
+        .map(([baterie, nr]) => ({ baterie, nr }))
+        .sort((a, b) => b.nr - a.nr);
     },
 
     async incarcaUtilizatori() {

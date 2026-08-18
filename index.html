@@ -313,9 +313,11 @@
     <div class="bg-emerald-600 text-white rounded-xl shadow p-6 text-center">
       <div class="text-3xl">✓</div>
       <h2 class="text-xl font-bold mt-1">Cererea ta a fost trimisă!</h2>
+      <p x-show="oferta" class="text-white font-bold text-sm mt-2" x-text="'Oferta ta a fost înregistrată cu nr. ' + (oferta ? oferta.nr_text : '')"></p>
       <p class="text-emerald-100 text-sm mt-1">Te contactăm în cel mai scurt timp cu oferta fermă. Mai jos ai deja toate datele pentru înscrierea în programul AFM — salvează-le sau fă o captură de ecran.</p>
-      <button x-show="bateriaAleasa()" @click="descarcaPdf()" class="mt-4 inline-block bg-white text-emerald-700 font-extrabold px-8 py-3 rounded-xl shadow hover:bg-emerald-50">⬇ Descarcă oferta PDF (A4)</button>
-      <p x-show="bateriaAleasa()" class="text-emerald-100 text-xs mt-2">Oferta completă, gata de tipărit — cu prețuri, punctaj și datele pentru înscrierea AFM.</p>
+      <a x-show="oferta" :href="oferta ? oferta.url : '#'" class="mt-4 inline-block bg-white text-emerald-700 font-extrabold px-8 py-3 rounded-xl shadow hover:bg-emerald-50">⬇ Descarcă oferta PDF (A4)</a>
+      <p x-show="oferta && emailTrimis" class="text-emerald-100 text-xs mt-2" x-text="'📧 Ți-am trimis oferta și pe e-mail, la ' + f.email + ' (verifică și folderul Spam).'"></p>
+      <p x-show="oferta && !emailTrimis" class="text-emerald-100 text-xs mt-2">Oferta completă, gata de tipărit — cu prețuri, punctaj și datele pentru înscrierea AFM.</p>
     </div>
 
     <template x-if="bateriaAleasa()">
@@ -402,6 +404,8 @@ function calculator() {
     trimis: false,
     seTrimite: false,
     eroareTrimitere: '',
+    oferta: null,
+    emailTrimis: false,
     f: {
       prosumator: '', are_baterie: '', activitati: '', datorii: '',
       putere_pv: null, invertor_model: '', invertor_tip: '', retea: '', consum_lunar: null,
@@ -515,35 +519,14 @@ function calculator() {
         });
         const j = await r.json();
         if (!j.ok) throw new Error(j.eroare || 'raspuns invalid');
+        this.oferta = j.oferta || null;
+        this.emailTrimis = !!j.email_trimis;
         this.trimis = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (e) {
         this.eroareTrimitere = 'Nu s-a putut trimite. Te rugam suna-ne direct la ' + this.C.firma.telefon;
       }
       this.seTrimite = false;
-    },
-
-    // descarca oferta PDF: form POST catre server, care recalculeaza si intoarce fisierul
-    descarcaPdf() {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'api/oferta-pdf.php';
-      const camp = document.createElement('input');
-      camp.type = 'hidden';
-      camp.name = 'date';
-      camp.value = JSON.stringify({
-        baterie_id: this.f.baterie_id,
-        putere_pv: this.f.putere_pv,
-        invertor_tip: this.f.invertor_tip,
-        contributie_extra: this.f.contributie_extra,
-        nume: this.f.nume,
-        judet: this.f.judet,
-        localitate: this.f.localitate
-      });
-      form.appendChild(camp);
-      document.body.appendChild(form);
-      form.submit();
-      form.remove();
     }
   };
 }
