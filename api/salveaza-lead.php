@@ -6,6 +6,10 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+// ora Romaniei - serverul e pe alt fus orar, altfel ofertele generate seara
+// ar purta data zilei precedente
+date_default_timezone_set('Europe/Bucharest');
+
 // emailul pe care primesti notificarile de lead nou
 $EMAIL_NOTIFICARE = 'afm.baterii@idnapower.ro';
 
