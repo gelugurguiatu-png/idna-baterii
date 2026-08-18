@@ -39,7 +39,8 @@ if (strlen($nume) < 3 || strlen($telefon) < 10 || !filter_var($email, FILTER_VAL
     exit;
 }
 
-// anti-spam simplu: max 5 cereri pe ora de la acelasi IP
+// anti-spam simplu: max 15 cereri pe ora de la acelasi IP
+// (limita mai larga: retelele mobile grupeaza multi utilizatori pe acelasi IP)
 $ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'necunoscut';
 $fisier_rate = __DIR__ . '/rate-limit.json';
 $acum = time();
@@ -57,7 +58,7 @@ $nr_ip = 0;
 foreach ($recente as $intrare) {
     if ($intrare['ip'] === $ip) { $nr_ip++; }
 }
-if ($nr_ip >= 5) {
+if ($nr_ip >= 15) {
     http_response_code(429);
     echo json_encode(array('ok' => false, 'eroare' => 'prea multe cereri, incearca mai tarziu'));
     exit;

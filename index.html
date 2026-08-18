@@ -517,14 +517,18 @@ function calculator() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(date)
         });
-        const j = await r.json();
-        if (!j.ok) throw new Error(j.eroare || 'raspuns invalid');
+        const j = await r.json().catch(() => null);
+        if (!j || !j.ok) throw new Error((j && j.eroare) || 'raspuns invalid');
         this.oferta = j.oferta || null;
         this.emailTrimis = !!j.email_trimis;
         this.trimis = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (e) {
-        this.eroareTrimitere = 'Nu s-a putut trimite. Te rugam suna-ne direct la ' + this.C.firma.telefon;
+        if (String(e.message).includes('prea multe')) {
+          this.eroareTrimitere = 'S-au trimis deja mai multe cereri de pe această conexiune. Mai încearcă peste o oră sau sună-ne la ' + this.C.firma.telefon + '.';
+        } else {
+          this.eroareTrimitere = 'Nu s-a putut trimite (' + e.message + '). Te rugăm sună-ne direct la ' + this.C.firma.telefon + '.';
+        }
       }
       this.seTrimite = false;
     }
