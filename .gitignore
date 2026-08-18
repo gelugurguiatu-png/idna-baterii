@@ -7,3 +7,6 @@ baterii-deploy.zip
 api/catalog.json
 api/utilizatori.json
 api/rate-limit-login.json
+lib/tfpdf/font/unifont/*.mtx.php
+lib/tfpdf/font/unifont/*.cw.dat
+lib/tfpdf/font/unifont/*.cw127.php
