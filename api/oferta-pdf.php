@@ -7,6 +7,22 @@
 require __DIR__ . '/../lib/tfpdf/tfpdf.php';
 require_once __DIR__ . '/../lib/tfpdf/font/unifont/ttfonts.php';
 
+// auto-curatare cache fonturi: daca un .mtx.php indica o cale de ttf care nu
+// exista pe acest server (ex. cache generat pe alta masina), il stergem ca
+// tFPDF sa-l regenereze corect
+$unifontDir = __DIR__ . '/../lib/tfpdf/font/unifont/';
+foreach (glob($unifontDir . '*.mtx.php') as $mtx) {
+    $continut = file_get_contents($mtx);
+    if (preg_match("/\\\$ttffile\\s*=\\s*'([^']+)'/", $continut, $m)) {
+        if (!file_exists($m[1])) {
+            $baza = substr($mtx, 0, -strlen('.mtx.php'));
+            @unlink($mtx);
+            @unlink($baza . '.cw.dat');
+            @unlink($baza . '.cw127.php');
+        }
+    }
+}
+
 $TVA = 0.21; // cota TVA folosita si in oferta model
 
 // ---------- date intrare ----------
