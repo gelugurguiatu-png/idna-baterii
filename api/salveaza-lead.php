@@ -5,7 +5,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // emailul pe care primesti notificarile de lead nou
-$EMAIL_NOTIFICARE = 'office@idnapower.ro'; // <-- SCHIMBA daca vrei alt email
+$EMAIL_NOTIFICARE = 'afm.baterii@idnapower.ro';
 
 // accepta doar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

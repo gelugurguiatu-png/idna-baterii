@@ -9,8 +9,8 @@
 return array(
     'firma' => array(
         'nume' => 'iDNA Power',
-        'telefon' => '0740 000 000',
-        'email' => 'office@idnapower.ro',
+        'telefon' => '0744 555 445',
+        'email' => 'afm.baterii@idnapower.ro',
         'atestat_anre' => 'Atestat ANRE tip B',
         'judete' => array('Galati', 'Braila', 'Vrancea', 'Vaslui', 'Tulcea'),
     ),
