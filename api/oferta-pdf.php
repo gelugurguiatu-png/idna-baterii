@@ -393,7 +393,7 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $pdf->SetFont('DejaVu', '', 10);
     $pasi = array(
         'Vă contactăm cu oferta fermă și stabilim detaliile tehnice.',
-        'Când AFM deschide sesiunea, vă înscrieți în aplicația AFM cu datele din această ofertă - vă ghidăm pas cu pas.',
+        'Când AFM deschide sesiunea, vă înscrieți în aplicația AFM cu datele din această ofertă - le aveți deja pregătite, pentru o depunere rapidă.',
         'După aprobare, ne selectați ca instalator validat în aplicația AFM (aveți la dispoziție 90 de zile).',
         'Instalăm sistemul de stocare, îl punem în funcțiune și actualizăm certificatul de racordare.',
         'Plătiți doar contribuția proprie - finanțarea AFM o încasăm direct de la stat.',
