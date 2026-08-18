@@ -191,7 +191,10 @@
                 <td class="pr-2" x-text="o.baterie"></td>
                 <td class="pr-2 text-right whitespace-nowrap" x-text="Number(o.contributie_client).toLocaleString('ro-RO') + ' lei'"></td>
                 <td class="pr-2 text-right font-bold" x-text="Number(o.punctaj).toFixed(1)"></td>
-                <td class="text-right"><a :href="'../api/descarca-oferta.php?t=' + o.token" class="text-emerald-700 underline whitespace-nowrap">PDF ⬇</a></td>
+                <td class="text-right whitespace-nowrap">
+                  <a :href="'../api/descarca-oferta.php?t=' + o.token" class="text-emerald-700 underline">PDF ⬇</a>
+                  <button x-show="rol==='admin'" @click="stergeOferta(o)" class="ml-2 text-red-400 hover:text-red-600 text-xs underline">Șterge</button>
+                </td>
               </tr>
             </template>
           </tbody>
@@ -376,6 +379,19 @@ function admin() {
       const r = await fetch('../api/admin-oferte.php');
       const j = await r.json();
       if (j.ok) this.oferte = j.oferte;
+    },
+
+    // soft-delete oferta (doar admin) - dispare din lista, numerotarea ramane intacta
+    async stergeOferta(o) {
+      if (!confirm('Sigur ștergi oferta nr. ' + o.nr_text + ' (' + o.nume + ')? PDF-ul va fi șters definitiv.')) return;
+      const r = await fetch('../api/admin-oferte.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actiune: 'sterge', nr: o.nr })
+      });
+      const j = await r.json();
+      if (!j.ok) { alert('Eroare: ' + (j.eroare || 'necunoscuta')); return; }
+      await this.incarcaOferte();
     },
 
     // agregare pentru grafic: numar de oferte per tip de baterie, descrescator

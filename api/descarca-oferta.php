@@ -23,7 +23,7 @@ if (!is_array($registru)) { $registru = array(); }
 
 $gasita = null;
 foreach ($registru as $o) {
-    if (isset($o['token']) && hash_equals($o['token'], $token)) { $gasita = $o; break; }
+    if (isset($o['token']) && hash_equals($o['token'], $token) && empty($o['sters'])) { $gasita = $o; break; }
 }
 
 if (!$gasita || !file_exists(__DIR__ . '/oferte/' . $gasita['fisier'])) {
