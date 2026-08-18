@@ -4,3 +4,6 @@ api/rate-limit.json
 deploy.php
 api/callback.log
 baterii-deploy.zip
+api/catalog.json
+api/utilizatori.json
+api/rate-limit-login.json

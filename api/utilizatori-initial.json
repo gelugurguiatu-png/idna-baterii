@@ -1,0 +1,10 @@
+{
+  "utilizatori": [
+    {
+      "utilizator": "gelu",
+      "hash": "$2y$10$IOn7TJn1NbsZLVxzdeqGU.bw4TveyPMaiK5bHSqforQ1jm84YRydq",
+      "rol": "admin",
+      "schimba_parola": true
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+<?php
+// Catalog IMPLICIT (in git). Bateriile de aici sunt EXEMPLE si se folosesc
+// DOAR pana cand un operator salveaza prima data catalogul in admin
+// (care creeaza api/catalog.json pe server - fisier ce NU e in git).
+//
+// firma + program raman mereu aici (le administreaza Gelu prin git);
+// bateriile din catalog.json au prioritate fata de cele de mai jos.
+
+return array(
+    'firma' => array(
+        'nume' => 'iDNA Power',
+        'telefon' => '0740 000 000',
+        'email' => 'office@idnapower.ro',
+        'atestat_anre' => 'Atestat ANRE tip B',
+        'judete' => array('Galati', 'Braila', 'Vrancea', 'Vaslui', 'Tulcea'),
+    ),
+    'program' => array(
+        'procent_finantare' => 0.75,
+        'plafon_finantare' => 15000,
+        'standard_cost' => 1250,
+        'capacitate_minima' => 12,
+        'contributie_minima' => 0.25,
+        'punctaj_contrib_coef' => 80,
+        'punctaj_contrib_minus' => 10,
+        'punctaj_contrib_max' => 40,
+        'punctaj_capacitate_max' => 40,
+        'punctaj_pv_max' => 20,
+    ),
+    'baterii' => array(
+        array(
+            'id' => 'exemplu-1',
+            'marca' => 'EXEMPLU Marca',
+            'model' => 'PowerBox 15',
+            'tehnologie' => 'LiFePO4',
+            'capacitate_kwh' => 15,
+            'capacitate_utila_kwh' => 14.2,
+            'garantie_ani' => 10,
+            'cicluri' => 6000,
+            'retea' => 'ambele',
+            'invertoare_compatibile' => 'Deye, SolaX, Growatt (hibride)',
+            'pret_baterie' => 19500,
+            'pret_montaj' => 3500,
+            'pret_invertor_hibrid' => 7500,
+            'stoc' => 4,
+            'termen_zile' => 14,
+            'activ' => true,
+        ),
+        array(
+            'id' => 'exemplu-2',
+            'marca' => 'EXEMPLU Marca',
+            'model' => 'PowerBox 20',
+            'tehnologie' => 'LiFePO4',
+            'capacitate_kwh' => 20,
+            'capacitate_utila_kwh' => 19,
+            'garantie_ani' => 10,
+            'cicluri' => 6000,
+            'retea' => 'tri',
+            'invertoare_compatibile' => 'Deye, SolaX (hibride trifazate)',
+            'pret_baterie' => 26000,
+            'pret_montaj' => 4000,
+            'pret_invertor_hibrid' => 9500,
+            'stoc' => 2,
+            'termen_zile' => 14,
+            'activ' => true,
+        ),
+        array(
+            'id' => 'exemplu-3',
+            'marca' => 'EXEMPLU Marca',
+            'model' => 'PowerBox 12 mini',
+            'tehnologie' => 'LiFePO4',
+            'capacitate_kwh' => 12,
+            'capacitate_utila_kwh' => 11.4,
+            'garantie_ani' => 7,
+            'cicluri' => 4500,
+            'retea' => 'mono',
+            'invertoare_compatibile' => 'Growatt, Huawei (hibride monofazate)',
+            'pret_baterie' => 15500,
+            'pret_montaj' => 3000,
+            'pret_invertor_hibrid' => 6500,
+            'stoc' => 6,
+            'termen_zile' => 10,
+            'activ' => true,
+        ),
+    ),
+);

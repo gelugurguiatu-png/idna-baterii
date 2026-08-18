@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Administrare baterii – iDNA Power</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen" x-data="admin()" x-init="init()" x-cloak>
+
+<!-- ANTET -->
+<header class="bg-slate-900 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="font-bold">iDNA Power · Administrare catalog baterii</div>
+    <div x-show="logat" class="flex items-center gap-4 text-sm">
+      <span class="text-slate-300" x-text="utilizator + (rol==='admin' ? ' (admin)' : '')"></span>
+      <button @click="tab='parola'" class="underline text-slate-300 hover:text-white">Schimbă parola</button>
+      <button @click="logout()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg">Ieșire</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<main x-show="!logat" class="max-w-sm mx-auto px-4 py-16">
+  <div class="bg-white rounded-xl shadow p-6">
+    <h1 class="text-lg font-bold">Autentificare operator</h1>
+    <div class="mt-4 space-y-3">
+      <div>
+        <label class="text-sm font-medium">Utilizator</label>
+        <input type="text" x-model="loginForm.utilizator" @keyup.enter="login()" class="mt-1 w-full border rounded-lg p-3" autocomplete="username">
+      </div>
+      <div>
+        <label class="text-sm font-medium">Parolă</label>
+        <input type="password" x-model="loginForm.parola" @keyup.enter="login()" class="mt-1 w-full border rounded-lg p-3" autocomplete="current-password">
+      </div>
+      <p class="text-sm text-red-600" x-show="loginEroare" x-text="loginEroare"></p>
+      <button @click="login()" :disabled="seIncarca" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg" x-text="seIncarca ? 'Se verifică...' : 'Intră'"></button>
+    </div>
+  </div>
+</main>
+
+<!-- CONTINUT DUPA LOGIN -->
+<main x-show="logat" class="max-w-6xl mx-auto px-4 py-6">
+
+  <!-- schimbare parola fortata / voluntara -->
+  <section x-show="tab==='parola' || parolaFortata" class="max-w-sm mx-auto bg-white rounded-xl shadow p-6 mb-6">
+    <h2 class="font-bold" x-text="parolaFortata ? 'Setează-ți parola proprie (obligatoriu la primul login)' : 'Schimbă parola'"></h2>
+    <div class="mt-4 space-y-3">
+      <div>
+        <label class="text-sm font-medium">Parola actuală</label>
+        <input type="password" x-model="parolaForm.veche" class="mt-1 w-full border rounded-lg p-3" autocomplete="current-password">
+      </div>
+      <div>
+        <label class="text-sm font-medium">Parola nouă (minimum 8 caractere)</label>
+        <input type="password" x-model="parolaForm.noua" class="mt-1 w-full border rounded-lg p-3" autocomplete="new-password">
+      </div>
+      <div>
+        <label class="text-sm font-medium">Repetă parola nouă</label>
+        <input type="password" x-model="parolaForm.noua2" class="mt-1 w-full border rounded-lg p-3" autocomplete="new-password">
+      </div>
+      <p class="text-sm text-red-600" x-show="parolaEroare" x-text="parolaEroare"></p>
+      <button @click="schimbaParola()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg">Salvează parola</button>
+      <button x-show="!parolaFortata" @click="tab='baterii'" class="w-full border py-2 rounded-lg text-sm">Renunță</button>
+    </div>
+  </section>
+
+  <template x-if="!parolaFortata">
+  <div>
+
+    <!-- TABURI -->
+    <div class="flex gap-2 mb-4" x-show="tab!=='parola'">
+      <button @click="tab='baterii'" :class="tab==='baterii' ? 'bg-slate-900 text-white' : 'bg-white'" class="px-4 py-2 rounded-lg font-medium shadow-sm">Baterii</button>
+      <button x-show="rol==='admin'" @click="tab='utilizatori'; incarcaUtilizatori()" :class="tab==='utilizatori' ? 'bg-slate-900 text-white' : 'bg-white'" class="px-4 py-2 rounded-lg font-medium shadow-sm">Operatori</button>
+    </div>
+
+    <!-- TAB BATERII -->
+    <section x-show="tab==='baterii'">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <p class="text-sm text-slate-500">
+          <span x-text="baterii.length"></span> baterii în catalog ·
+          <span class="text-emerald-600 font-medium" x-text="baterii.filter(b => b.activ).length + ' active pe site'"></span>
+          <span x-show="!salvatPeServer" class="text-amber-600"> · momentan se afișează EXEMPLELE — salvează ca să preiei controlul</span>
+        </p>
+        <div class="flex gap-2">
+          <button @click="adaugaBaterie()" class="border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold px-4 py-2 rounded-lg">+ Adaugă baterie</button>
+          <button @click="salveazaCatalog()" :disabled="seIncarca" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg" x-text="seIncarca ? 'Se salvează...' : 'Salvează pe site'"></button>
+        </div>
+      </div>
+
+      <p class="text-sm rounded-lg p-3 mb-4" :class="mesajOk ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-show="mesaj" x-text="mesaj"></p>
+
+      <div class="space-y-3">
+        <template x-for="(b, i) in baterii" :key="i">
+          <div class="bg-white rounded-xl shadow p-4" :class="!b.activ ? 'opacity-60' : ''">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="font-bold" x-text="(b.marca || 'Marcă') + ' ' + (b.model || 'Model') + ' · ' + (b.capacitate_kwh || '?') + ' kWh'"></div>
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" x-model="b.activ" class="w-5 h-5">
+                  <span :class="b.activ ? 'text-emerald-600 font-medium' : 'text-slate-400'" x-text="b.activ ? 'Vizibil pe site' : 'Ascuns'"></span>
+                </label>
+                <button @click="stergeBaterie(i)" class="text-red-500 hover:text-red-700 text-sm underline">Șterge</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div><label class="text-xs text-slate-500">Marcă</label><input type="text" x-model="b.marca" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Model</label><input type="text" x-model="b.model" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Tehnologie</label>
+                <select x-model="b.tehnologie" class="w-full border rounded p-2 bg-white">
+                  <option>LiFePO4</option><option>Li-Ion</option><option>Na-Ion</option>
+                </select>
+              </div>
+              <div><label class="text-xs text-slate-500">Rețea</label>
+                <select x-model="b.retea" class="w-full border rounded p-2 bg-white">
+                  <option value="mono">monofazat</option><option value="tri">trifazat</option><option value="ambele">ambele</option>
+                </select>
+              </div>
+              <div><label class="text-xs text-slate-500">Capacitate (kWh) — min 12 eligibil</label><input type="number" step="0.1" x-model.number="b.capacitate_kwh" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Capacitate utilă (kWh)</label><input type="number" step="0.1" x-model.number="b.capacitate_utila_kwh" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Garanție (ani) — min 5</label><input type="number" x-model.number="b.garantie_ani" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Cicluri — min 3000</label><input type="number" x-model.number="b.cicluri" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Preț baterie cu TVA (lei)</label><input type="number" x-model.number="b.pret_baterie" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Preț montaj cu TVA (lei)</label><input type="number" x-model.number="b.pret_montaj" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Preț invertor hibrid cu TVA (lei)</label><input type="number" x-model.number="b.pret_invertor_hibrid" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Stoc (buc)</label><input type="number" x-model.number="b.stoc" class="w-full border rounded p-2"></div>
+              <div class="col-span-2"><label class="text-xs text-slate-500">Invertoare compatibile (text afișat clientului)</label><input type="text" x-model="b.invertoare_compatibile" class="w-full border rounded p-2" placeholder="ex: Deye, SolaX, Growatt (hibride)"></div>
+              <div><label class="text-xs text-slate-500">Termen instalare (zile)</label><input type="number" x-model.number="b.termen_zile" class="w-full border rounded p-2"></div>
+            </div>
+            <p class="text-xs text-amber-600 mt-2" x-show="b.capacitate_kwh > 0 && b.capacitate_kwh < 12">⚠ Sub 12 kWh — NU e eligibilă în programul AFM, nu va apărea pe site.</p>
+          </div>
+        </template>
+      </div>
+
+      <div class="mt-4 flex justify-end">
+        <button @click="salveazaCatalog()" :disabled="seIncarca" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-lg" x-text="seIncarca ? 'Se salvează...' : 'Salvează pe site'"></button>
+      </div>
+    </section>
+
+    <!-- TAB OPERATORI -->
+    <section x-show="tab==='utilizatori'" class="max-w-2xl">
+      <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="font-bold mb-3">Operatori cu acces la administrare</h2>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-slate-500 border-b"><th class="py-2">Utilizator</th><th>Rol</th><th>Stare</th><th></th></tr></thead>
+          <tbody>
+            <template x-for="u in utilizatori" :key="u.utilizator">
+              <tr class="border-b">
+                <td class="py-2 font-medium" x-text="u.utilizator"></td>
+                <td x-text="u.rol"></td>
+                <td class="text-xs" x-text="u.schimba_parola ? 'parolă temporară' : 'activ'"></td>
+                <td class="text-right">
+                  <button x-show="u.utilizator !== utilizator" @click="stergeUtilizator(u.utilizator)" class="text-red-500 hover:text-red-700 underline text-xs">Șterge</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+
+        <h3 class="font-bold mt-6 mb-2 text-sm">Adaugă operator nou</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input type="text" x-model="utilizatorNou.utilizator" placeholder="nume utilizator" class="border rounded-lg p-2">
+          <input type="text" x-model="utilizatorNou.parola" placeholder="parolă temporară (min 8)" class="border rounded-lg p-2">
+          <select x-model="utilizatorNou.rol" class="border rounded-lg p-2 bg-white">
+            <option value="operator">operator</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">Operatorul primește parola temporară de la tine și e obligat să și-o schimbe la primul login. Operatorii editează bateriile; adminii pot gestiona și operatorii.</p>
+        <p class="text-sm text-red-600 mt-1" x-show="utilizatoriEroare" x-text="utilizatoriEroare"></p>
+        <button @click="adaugaUtilizator()" class="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg">Adaugă</button>
+      </div>
+    </section>
+
+  </div>
+  </template>
+</main>
+
+<script>
+function admin() {
+  return {
+    logat: false,
+    utilizator: '',
+    rol: 'operator',
+    parolaFortata: false,
+    tab: 'baterii',
+    seIncarca: false,
+    mesaj: '',
+    mesajOk: true,
+    loginForm: { utilizator: '', parola: '' },
+    loginEroare: '',
+    parolaForm: { veche: '', noua: '', noua2: '' },
+    parolaEroare: '',
+    baterii: [],
+    salvatPeServer: true,
+    utilizatori: [],
+    utilizatorNou: { utilizator: '', parola: '', rol: 'operator' },
+    utilizatoriEroare: '',
+
+    async init() {
+      // daca exista sesiune activa, incercam direct sa incarcam catalogul
+      try {
+        const r = await fetch('../api/admin-catalog.php');
+        if (r.ok) {
+          const j = await r.json();
+          this.baterii = j.baterii;
+          this.salvatPeServer = j.salvat_pe_server;
+          this.logat = true;
+          // nu stim rolul din acest endpoint; il aflam la login - pana atunci ascundem tabul
+          this.rol = sessionStorage.getItem('baterii_rol') || 'operator';
+          this.utilizator = sessionStorage.getItem('baterii_utilizator') || 'operator';
+        }
+      } catch (e) { /* neautentificat - ramane ecranul de login */ }
+    },
+
+    async login() {
+      this.seIncarca = true;
+      this.loginEroare = '';
+      try {
+        const r = await fetch('../api/admin-login.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.loginForm)
+        });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.eroare || 'eroare');
+        this.utilizator = j.utilizator;
+        this.rol = j.rol;
+        this.parolaFortata = j.schimba_parola;
+        sessionStorage.setItem('baterii_rol', j.rol);
+        sessionStorage.setItem('baterii_utilizator', j.utilizator);
+        this.logat = true;
+        this.loginForm.parola = '';
+        if (!this.parolaFortata) await this.incarcaCatalog();
+      } catch (e) {
+        this.loginEroare = e.message;
+      }
+      this.seIncarca = false;
+    },
+
+    async logout() {
+      await fetch('../api/admin-logout.php');
+      sessionStorage.clear();
+      window.location.reload();
+    },
+
+    async schimbaParola() {
+      this.parolaEroare = '';
+      if (this.parolaForm.noua.length < 8) { this.parolaEroare = 'Parola nouă trebuie să aibă minimum 8 caractere.'; return; }
+      if (this.parolaForm.noua !== this.parolaForm.noua2) { this.parolaEroare = 'Parolele nu coincid.'; return; }
+      try {
+        const r = await fetch('../api/admin-parola.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parola_veche: this.parolaForm.veche, parola_noua: this.parolaForm.noua })
+        });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.eroare || 'eroare');
+        this.parolaFortata = false;
+        this.tab = 'baterii';
+        this.parolaForm = { veche: '', noua: '', noua2: '' };
+        await this.incarcaCatalog();
+        this.arataMesaj('Parola a fost schimbată.', true);
+      } catch (e) {
+        this.parolaEroare = e.message;
+      }
+    },
+
+    async incarcaCatalog() {
+      const r = await fetch('../api/admin-catalog.php');
+      if (r.ok) {
+        const j = await r.json();
+        this.baterii = j.baterii;
+        this.salvatPeServer = j.salvat_pe_server;
+      }
+    },
+
+    adaugaBaterie() {
+      this.baterii.push({
+        id: '', marca: '', model: '', tehnologie: 'LiFePO4',
+        capacitate_kwh: null, capacitate_utila_kwh: null,
+        garantie_ani: 10, cicluri: 6000, retea: 'ambele',
+        invertoare_compatibile: '', pret_baterie: null, pret_montaj: null,
+        pret_invertor_hibrid: 0, stoc: 1, termen_zile: 14, activ: false
+      });
+    },
+
+    stergeBaterie(i) {
+      if (!confirm('Sigur ștergi bateria "' + (this.baterii[i].marca + ' ' + this.baterii[i].model) + '"?')) return;
+      this.baterii.splice(i, 1);
+    },
+
+    async salveazaCatalog() {
+      this.seIncarca = true;
+      this.mesaj = '';
+      try {
+        const r = await fetch('../api/admin-catalog.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baterii: this.baterii })
+        });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.eroare || 'eroare');
+        this.salvatPeServer = true;
+        this.arataMesaj('Salvat! Site-ul public afișează acum ' + this.baterii.filter(b => b.activ).length + ' baterii active.', true);
+      } catch (e) {
+        this.arataMesaj('Eroare la salvare: ' + e.message, false);
+      }
+      this.seIncarca = false;
+    },
+
+    async incarcaUtilizatori() {
+      const r = await fetch('../api/admin-utilizatori.php');
+      const j = await r.json();
+      if (j.ok) this.utilizatori = j.utilizatori;
+    },
+
+    async adaugaUtilizator() {
+      this.utilizatoriEroare = '';
+      try {
+        const r = await fetch('../api/admin-utilizatori.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actiune: 'adauga', ...this.utilizatorNou })
+        });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.eroare || 'eroare');
+        this.utilizatorNou = { utilizator: '', parola: '', rol: 'operator' };
+        await this.incarcaUtilizatori();
+      } catch (e) {
+        this.utilizatoriEroare = e.message;
+      }
+    },
+
+    async stergeUtilizator(nume) {
+      if (!confirm('Sigur ștergi operatorul "' + nume + '"?')) return;
+      try {
+        const r = await fetch('../api/admin-utilizatori.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actiune: 'sterge', utilizator: nume })
+        });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.eroare || 'eroare');
+        await this.incarcaUtilizatori();
+      } catch (e) {
+        this.utilizatoriEroare = e.message;
+        alert(e.message);
+      }
+    },
+
+    arataMesaj(text, ok) {
+      this.mesaj = text;
+      this.mesajOk = ok;
+      setTimeout(() => { this.mesaj = ''; }, 6000);
+    }
+  };
+}
+</script>
+</body>
+</html>

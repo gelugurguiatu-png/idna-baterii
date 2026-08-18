@@ -7,14 +7,13 @@
 <meta name="description" content="Calculează punctajul tău în Programul AFM de stocare a energiei și alege bateria potrivită pentru sistemul tău fotovoltaic. Finanțare până la 15.000 lei.">
 <script src="https://cdn.tailwindcss.com"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script src="catalog.js?v=1"></script>
 <style>
   [x-cloak]{display:none!important}
   .card-baterie{transition:box-shadow .2s, transform .2s}
   .card-baterie:hover{box-shadow:0 8px 24px rgba(0,0,0,.12); transform:translateY(-2px)}
 </style>
 </head>
-<body class="bg-slate-100 text-slate-800" x-data="calculator()" x-cloak>
+<body class="bg-slate-100 text-slate-800" x-data="calculator()" x-init="init()" x-cloak>
 
 <!-- ANTET -->
 <header class="bg-slate-900 text-white">
@@ -272,7 +271,7 @@
       </div>
     </template>
 
-    <div x-show="bateriiCompatibile().length===0" class="bg-white rounded-xl shadow p-6 text-center text-slate-500">
+    <div x-show="catalogIncarcat && bateriiCompatibile().length===0" class="bg-white rounded-xl shadow p-6 text-center text-slate-500">
       Nu avem momentan o baterie potrivită pentru configurația ta, dar te putem ajuta cu o soluție personalizată.
       Trimite-ne datele și te sunăm.
       <button @click="f.baterie_id='personalizat'; trimite()" class="mt-4 w-full bg-emerald-600 text-white font-bold py-3 rounded-lg">Cere ofertă personalizată</button>
@@ -355,7 +354,26 @@
 <script>
 function calculator() {
   return {
-    C: window.CATALOG,
+    // catalog gol pana la incarcarea de pe server (init) - evita erori de binding
+    C: {
+      firma: { nume: 'iDNA Power', telefon: '', email: '', atestat_anre: '', judete: [] },
+      program: { procent_finantare: 0.75, plafon_finantare: 15000, standard_cost: 1250, capacitate_minima: 12, contributie_minima: 0.25, punctaj_contrib_coef: 80, punctaj_contrib_minus: 10, punctaj_contrib_max: 40, punctaj_capacitate_max: 40, punctaj_pv_max: 20 },
+      baterii: []
+    },
+    catalogIncarcat: false,
+
+    async init() {
+      // catalogul vine de pe server - editabil de operatori din /baterii/admin/
+      try {
+        const r = await fetch('api/catalog.php');
+        const j = await r.json();
+        if (j && j.baterii) { this.C = j; }
+      } catch (e) {
+        console.error('nu s-a putut incarca catalogul', e);
+      }
+      this.catalogIncarcat = true;
+    },
+
     pas: 1,
     trimis: false,
     seTrimite: false,
