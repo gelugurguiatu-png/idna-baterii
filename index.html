@@ -203,14 +203,14 @@
       <h2 class="text-lg font-bold">Pasul 4 · Alege bateria potrivită</h2>
       <p class="text-sm text-slate-500 mt-1">Pentru fiecare baterie vezi exact: cât finanțează AFM, cât plătești tu și ce punctaj obții. Proiectele se aprobă în ordinea punctajului, în limita bugetului AFM.</p>
 
-      <!-- slider + caseta contributie suplimentara (sincronizate) -->
-      <div class="mt-4 bg-slate-50 rounded-lg p-4">
+      <!-- slider + caseta contributie suplimentara (sincronizate, plafonate la maximul util) -->
+      <div class="mt-4 bg-slate-50 rounded-lg p-4" x-show="sliderMax() > 0">
         <label class="font-medium text-sm">Vrei punctaj mai mare? Mărește-ți contribuția proprie <span class="text-slate-400">(opțional)</span></label>
         <div class="flex items-center gap-4 mt-2">
-          <input type="range" min="0" max="50000" step="500" x-model.number="f.contributie_extra" class="flex-1">
+          <input type="range" min="0" :max="sliderMax()" step="500" x-model.number="f.contributie_extra" class="flex-1">
           <div class="flex items-center gap-1">
-            <input type="number" min="0" max="50000" step="500" x-model.number="f.contributie_extra"
-              @change="f.contributie_extra = Math.min(50000, Math.max(0, Number(f.contributie_extra) || 0))"
+            <input type="number" min="0" :max="sliderMax()" step="500" x-model.number="f.contributie_extra"
+              @change="f.contributie_extra = Math.min(sliderMax(), Math.max(0, Number(f.contributie_extra) || 0))"
               class="w-28 border rounded-lg p-2 text-right font-bold">
             <span class="text-sm text-slate-500">lei</span>
           </div>
@@ -218,9 +218,9 @@
         <div class="flex justify-between text-xs text-slate-500 mt-1">
           <span>+0 lei</span>
           <span class="font-bold text-slate-700" x-text="'+' + lei(f.contributie_extra) + ' contribuție suplimentară'"></span>
-          <span>+50.000 lei</span>
+          <span x-text="'+' + lei(sliderMax())"></span>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Fiecare leu în plus la contribuție scade finanțarea AFM, dar crește punctajul (regula AFM: punctaj contribuție = 80 × procent − 10, max 40 pct).</p>
+        <p class="text-xs text-slate-500 mt-1">Fiecare leu în plus la contribuție scade finanțarea AFM, dar crește punctajul (regula AFM: punctaj contribuție = 80 × procent − 10, max 40 pct). Bara e limitată automat la suma peste care punctajul nu mai crește la nicio baterie.</p>
       </div>
     </div>
 
@@ -267,6 +267,10 @@
               PV: <b x-text="calc(b).p_pv.toFixed(1)"></b>
             </div>
           </div>
+        </div>
+
+        <div class="mt-3 text-xs text-amber-600" x-show="f.contributie_extra > calc(b).extra_util_max">
+          La această baterie se aplică doar <b x-text="'+' + lei(calc(b).extra_aplicat)"></b> din contribuția suplimentară — punctajul contribuției e deja la maximul de 40 pct, restul banilor nu ar mai aduce puncte.
         </div>
 
         <div class="mt-3 text-xs text-slate-500" x-show="f.consum_lunar > 0">
@@ -439,13 +443,29 @@ function calculator() {
       const invertor_cost = (this.f.invertor_tip === 'hibrid') ? 0 : b.pret_invertor_hibrid;
       const total = b.pret_baterie + b.pret_montaj + invertor_cost;
       const afm_baza = Math.min(total * P.procent_finantare, P.plafon_finantare, eligibile_plafonate);
-      const afm = Math.max(0, afm_baza - this.f.contributie_extra);
+      // pragul de contributie la care punctajul contributiei atinge maximul (62,5%)
+      // peste el, banii in plus nu mai aduc puncte -> plafonam contributia extra aplicata
+      const prag = (P.punctaj_contrib_max + P.punctaj_contrib_minus) / P.punctaj_contrib_coef;
+      const extra_util_max = Math.max(0, Math.round(afm_baza - (1 - prag) * total));
+      const extra_aplicat = Math.min(this.f.contributie_extra || 0, extra_util_max);
+      const afm = Math.max(0, afm_baza - extra_aplicat);
       const client = total - afm;
       const procent = client / total;
       const p_contrib = Math.min(Math.max(P.punctaj_contrib_coef * procent - P.punctaj_contrib_minus, 0), P.punctaj_contrib_max);
       const p_cap = Math.min(b.capacitate_kwh, P.punctaj_capacitate_max);
       const p_pv = Math.min(this.f.putere_pv || 0, P.punctaj_pv_max);
-      return { eligibile, plafon_cost, invertor_cost, total, afm, client, procent, p_contrib, p_cap, p_pv, punctaj_total: p_contrib + p_cap + p_pv };
+      return { eligibile, plafon_cost, invertor_cost, total, afm, client, procent, extra_util_max, extra_aplicat, p_contrib, p_cap, p_pv, punctaj_total: p_contrib + p_cap + p_pv };
+    },
+
+    // maximul util al barei = cea mai mare contributie suplimentara care mai
+    // aduce punctaj la vreuna dintre bateriile afisate (rotunjit la 500)
+    sliderMax() {
+      let m = 0;
+      for (const b of this.bateriiCompatibile()) {
+        const e = this.calc(b).extra_util_max;
+        if (e > m) m = e;
+      }
+      return Math.ceil(m / 500) * 500;
     },
 
     autonomie(b) {
