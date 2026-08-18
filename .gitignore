@@ -1,6 +1,6 @@
 api/leads.csv
 api/rate-limit.json
 .claude/
-api/deploy.php
+deploy.php
 api/callback.log
 baterii-deploy.zip
