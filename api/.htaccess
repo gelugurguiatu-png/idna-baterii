@@ -1,0 +1,4 @@
+# Protejeaza fisierele cu date - doar PHP-ul are voie sa le citeasca
+<FilesMatch "\.(csv|json|log)$">
+  Require all denied
+</FilesMatch>

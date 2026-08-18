@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator baterie AFM 2026 – iDNA Power</title>
+<meta name="description" content="Calculează punctajul tău în Programul AFM de stocare a energiei și alege bateria potrivită pentru sistemul tău fotovoltaic. Finanțare până la 15.000 lei.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="catalog.js?v=1"></script>
+<style>
+  [x-cloak]{display:none!important}
+  .card-baterie{transition:box-shadow .2s, transform .2s}
+  .card-baterie:hover{box-shadow:0 8px 24px rgba(0,0,0,.12); transform:translateY(-2px)}
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800" x-data="calculator()" x-cloak>
+
+<!-- ANTET -->
+<header class="bg-slate-900 text-white">
+  <div class="max-w-5xl mx-auto px-4 py-5 flex items-center justify-between">
+    <div>
+      <div class="text-xl font-bold" x-text="C.firma.nume"></div>
+      <div class="text-xs text-slate-300" x-text="C.firma.atestat_anre"></div>
+    </div>
+    <div class="text-right text-sm">
+      <div x-text="C.firma.telefon"></div>
+      <div class="text-slate-300" x-text="C.firma.email"></div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="bg-gradient-to-b from-slate-900 to-slate-800 text-white pb-10">
+  <div class="max-w-5xl mx-auto px-4 pt-8 text-center">
+    <h1 class="text-2xl md:text-4xl font-bold leading-tight">Baterie pentru sistemul tău fotovoltaic<br>cu până la <span class="text-emerald-400">15.000 lei</span> de la AFM</h1>
+    <p class="mt-3 text-slate-300 max-w-2xl mx-auto">Programul AFM 2026 pentru prosumatori: statul finanțează până la 75% din costul sistemului de stocare. Completează formularul de mai jos și afli pe loc <b>ce baterie ți se potrivește, cât te costă și ce punctaj obții</b>.</p>
+  </div>
+</section>
+
+<main class="max-w-3xl mx-auto px-4 -mt-6 pb-16">
+
+  <!-- BARA DE PROGRES -->
+  <div class="bg-white rounded-xl shadow p-4 mb-6" x-show="pas <= 4">
+    <div class="flex items-center gap-2">
+      <template x-for="(et, i) in ['Eligibilitate','Sistemul tău PV','Contact','Rezultate']" :key="i">
+        <div class="flex-1">
+          <div class="h-2 rounded-full" :class="pas > i ? 'bg-emerald-500' : 'bg-slate-200'"></div>
+          <div class="text-[11px] mt-1 text-center" :class="pas === i+1 ? 'font-bold text-slate-900' : 'text-slate-400'" x-text="et"></div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- PASUL 1: ELIGIBILITATE -->
+  <section x-show="pas === 1" class="bg-white rounded-xl shadow p-6 space-y-5">
+    <h2 class="text-lg font-bold">Pasul 1 · Verificăm dacă ești eligibil</h2>
+
+    <div>
+      <label class="font-medium">Ești prosumator? <span class="text-slate-400 text-sm">(ai contract de prosumator și certificat de racordare)</span></label>
+      <div class="flex gap-3 mt-2">
+        <button @click="f.prosumator='da'" :class="btn(f.prosumator==='da')">Da</button>
+        <button @click="f.prosumator='nu'" :class="btn(f.prosumator==='nu')">Nu</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="font-medium">Ai deja un sistem de stocare (baterie) instalat la această adresă?</label>
+      <div class="flex gap-3 mt-2">
+        <button @click="f.are_baterie='da'" :class="btn(f.are_baterie==='da')">Da</button>
+        <button @click="f.are_baterie='nu'" :class="btn(f.are_baterie==='nu')">Nu</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="font-medium">La adresă se desfășoară activități economice / e sediu de firmă?</label>
+      <div class="flex flex-wrap gap-3 mt-2">
+        <button @click="f.activitati='nu'" :class="btn(f.activitati==='nu')">Nu</button>
+        <button @click="f.activitati='contorizare'" :class="btn(f.activitati==='contorizare')">Da, cu contor separat</button>
+        <button @click="f.activitati='da'" :class="btn(f.activitati==='da')">Da</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="font-medium">Ai datorii restante la bugetul de stat sau local?</label>
+      <div class="flex gap-3 mt-2">
+        <button @click="f.datorii='nu'" :class="btn(f.datorii==='nu')">Nu</button>
+        <button @click="f.datorii='da'" :class="btn(f.datorii==='da')">Da</button>
+      </div>
+    </div>
+
+    <!-- mesaj neeligibil -->
+    <div x-show="eligibilitateCompletata() && !esteEligibil()" class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+      <b>Din păcate, nu ești eligibil în acest moment.</b>
+      <ul class="list-disc ml-5 mt-1">
+        <li x-show="f.prosumator==='nu'">Programul e doar pentru prosumatori. Dacă ai sistem fotovoltaic dar nu ești încă prosumator, te putem ajuta cu racordarea — sună-ne.</li>
+        <li x-show="f.are_baterie==='da'">Nu poți primi finanțare dacă ai deja un sistem de stocare la adresă (Art. 15).</li>
+        <li x-show="f.activitati==='da'">La adresă nu trebuie să existe activități economice, decât cu contorizare separată (Art. 15).</li>
+        <li x-show="f.datorii==='da'">Datoriile la buget trebuie achitate înainte de înscriere (Art. 15). După achitare, revino!</li>
+      </ul>
+      <p class="mt-2">Ne poți suna oricum la <b x-text="C.firma.telefon"></b> — poate găsim o soluție.</p>
+    </div>
+
+    <button @click="pas=2" x-show="esteEligibil()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg">Continuă →</button>
+  </section>
+
+  <!-- PASUL 2: SISTEMUL PV -->
+  <section x-show="pas === 2" class="bg-white rounded-xl shadow p-6 space-y-5">
+    <h2 class="text-lg font-bold">Pasul 2 · Sistemul tău fotovoltaic</h2>
+
+    <div>
+      <label class="font-medium">Puterea instalată a sistemului fotovoltaic (kW)</label>
+      <p class="text-xs text-slate-500">O găsești pe certificatul de racordare sau pe factura instalatorului. Contează la punctaj (max 20 puncte).</p>
+      <input type="number" step="0.1" min="0.1" max="100" x-model.number="f.putere_pv" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: 5.5">
+    </div>
+
+    <div>
+      <label class="font-medium">Marca și modelul invertorului tău</label>
+      <p class="text-xs text-slate-500">Scrie ce e pe eticheta invertorului (ex: Huawei SUN2000-5KTL, Growatt MIN 5000TL-XH).</p>
+      <input type="text" x-model="f.invertor_model" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: Huawei SUN2000-5KTL-L1">
+    </div>
+
+    <div>
+      <label class="font-medium">Invertorul tău este hibrid? <span class="text-slate-400 text-sm">(poate încărca baterii)</span></label>
+      <div class="flex flex-wrap gap-3 mt-2">
+        <button @click="f.invertor_tip='hibrid'" :class="btn(f.invertor_tip==='hibrid')">Da, e hibrid</button>
+        <button @click="f.invertor_tip='clasic'" :class="btn(f.invertor_tip==='clasic')">Nu, e clasic (on-grid)</button>
+        <button @click="f.invertor_tip='nustiu'" :class="btn(f.invertor_tip==='nustiu')">Nu știu</button>
+      </div>
+      <p class="text-xs text-amber-600 mt-2" x-show="f.invertor_tip==='clasic' || f.invertor_tip==='nustiu'">Dacă invertorul nu e hibrid, oferta va include și un invertor hibrid nou — ghidul AFM permite montarea lui odată cu bateria (cost suportat de tine, nu se finanțează).</p>
+    </div>
+
+    <div>
+      <label class="font-medium">Racordarea la rețea</label>
+      <div class="flex flex-wrap gap-3 mt-2">
+        <button @click="f.retea='mono'" :class="btn(f.retea==='mono')">Monofazat</button>
+        <button @click="f.retea='tri'" :class="btn(f.retea==='tri')">Trifazat</button>
+        <button @click="f.retea='nustiu'" :class="btn(f.retea==='nustiu')">Nu știu</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="font-medium">Consumul mediu lunar (kWh) <span class="text-slate-400 text-sm">— opțional</span></label>
+      <p class="text-xs text-slate-500">Îl găsești pe factura de energie. Ne ajută să-ți recomandăm capacitatea potrivită.</p>
+      <input type="number" min="0" x-model.number="f.consum_lunar" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: 350">
+    </div>
+
+    <div class="flex gap-3">
+      <button @click="pas=1" class="px-5 py-3 rounded-lg border font-medium">← Înapoi</button>
+      <button @click="pas=3" :disabled="!pas2Valid()" :class="pas2Valid() ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-300 cursor-not-allowed'" class="flex-1 text-white font-bold py-3 rounded-lg">Continuă →</button>
+    </div>
+  </section>
+
+  <!-- PASUL 3: CONTACT -->
+  <section x-show="pas === 3" class="bg-white rounded-xl shadow p-6 space-y-5">
+    <h2 class="text-lg font-bold">Pasul 3 · Datele tale de contact</h2>
+    <p class="text-sm text-slate-500">Pe baza lor îți pregătim oferta fermă și îți trimitem toate datele necesare înscrierii în programul AFM.</p>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="font-medium">Nume și prenume</label>
+        <input type="text" x-model="f.nume" class="mt-1 w-full border rounded-lg p-3" placeholder="ex: Ion Popescu">
+      </div>
+      <div>
+        <label class="font-medium">Telefon</label>
+        <input type="tel" x-model="f.telefon" class="mt-1 w-full border rounded-lg p-3" placeholder="ex: 0740123456">
+      </div>
+      <div>
+        <label class="font-medium">E-mail</label>
+        <input type="email" x-model="f.email" class="mt-1 w-full border rounded-lg p-3" placeholder="ex: ion@gmail.com">
+      </div>
+      <div>
+        <label class="font-medium">Județul unde se face montajul</label>
+        <select x-model="f.judet" class="mt-1 w-full border rounded-lg p-3 bg-white">
+          <option value="">alege...</option>
+          <template x-for="j in C.firma.judete" :key="j"><option :value="j" x-text="j"></option></template>
+          <option value="alt">alt județ</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="font-medium">Localitatea</label>
+        <input type="text" x-model="f.localitate" class="mt-1 w-full border rounded-lg p-3" placeholder="ex: Galați">
+      </div>
+    </div>
+
+    <div x-show="f.judet==='alt'" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
+      Momentan facem montaje în: <b x-text="C.firma.judete.join(', ')"></b>. Lasă-ne totuși datele — te contactăm dacă putem ajunge la tine.
+    </div>
+
+    <label class="flex items-start gap-3 text-sm">
+      <input type="checkbox" x-model="f.gdpr" class="mt-1 w-5 h-5">
+      <span>Sunt de acord cu prelucrarea datelor mele pentru întocmirea ofertei și cu contactarea mea de către <span x-text="C.firma.nume"></span>. Datele nu sunt transmise terților.</span>
+    </label>
+
+    <div class="flex gap-3">
+      <button @click="pas=2" class="px-5 py-3 rounded-lg border font-medium">← Înapoi</button>
+      <button @click="pas=4" :disabled="!pas3Valid()" :class="pas3Valid() ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-300 cursor-not-allowed'" class="flex-1 text-white font-bold py-3 rounded-lg">Vezi bateriile și punctajul →</button>
+    </div>
+  </section>
+
+  <!-- PASUL 4: REZULTATE -->
+  <section x-show="pas === 4 && !trimis" class="space-y-5">
+    <div class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-lg font-bold">Pasul 4 · Alege bateria potrivită</h2>
+      <p class="text-sm text-slate-500 mt-1">Pentru fiecare baterie vezi exact: cât finanțează AFM, cât plătești tu și ce punctaj obții. Proiectele se aprobă în ordinea punctajului, în limita bugetului AFM.</p>
+
+      <!-- slider contributie -->
+      <div class="mt-4 bg-slate-50 rounded-lg p-4">
+        <label class="font-medium text-sm">Vrei punctaj mai mare? Mărește-ți contribuția proprie <span class="text-slate-400">(opțional)</span></label>
+        <input type="range" min="0" max="10000" step="500" x-model.number="f.contributie_extra" class="w-full mt-2">
+        <div class="flex justify-between text-xs text-slate-500">
+          <span>+0 lei</span>
+          <span class="font-bold text-slate-700" x-text="'+' + lei(f.contributie_extra) + ' contribuție suplimentară'"></span>
+          <span>+10.000 lei</span>
+        </div>
+        <p class="text-xs text-slate-500 mt-1">Fiecare leu în plus la contribuție scade finanțarea AFM, dar crește punctajul (regula AFM: punctaj contribuție = 80 × procent − 10, max 40 pct).</p>
+      </div>
+    </div>
+
+    <!-- carduri baterii -->
+    <template x-for="b in bateriiCompatibile()" :key="b.id">
+      <div class="card-baterie bg-white rounded-xl shadow p-6" :class="f.baterie_id===b.id ? 'ring-2 ring-emerald-500' : ''">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <div class="text-lg font-bold" x-text="b.marca + ' ' + b.model"></div>
+            <div class="text-sm text-slate-500">
+              <span x-text="b.capacitate_kwh + ' kWh'"></span> ·
+              <span x-text="b.tehnologie"></span> ·
+              <span x-text="'garanție ' + b.garantie_ani + ' ani'"></span> ·
+              <span x-text="b.cicluri.toLocaleString('ro-RO') + ' cicluri'"></span>
+            </div>
+            <div class="text-xs text-slate-400 mt-1" x-text="'Compatibil cu: ' + b.invertoare_compatibile"></div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-extrabold text-emerald-600" x-text="calc(b).punctaj_total.toFixed(1) + ' pct'"></div>
+            <div class="text-xs text-slate-400">punctaj estimat (max 100)</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-center">
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500">Preț total proiect</div>
+            <div class="font-bold" x-text="lei(calc(b).total)"></div>
+            <div class="text-[11px] text-slate-400" x-show="calc(b).invertor_cost > 0" x-text="'include invertor hibrid ' + lei(calc(b).invertor_cost)"></div>
+          </div>
+          <div class="bg-emerald-50 rounded-lg p-3">
+            <div class="text-xs text-emerald-700">Plătește AFM</div>
+            <div class="font-bold text-emerald-700" x-text="lei(calc(b).afm)"></div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500">Plătești tu</div>
+            <div class="font-bold" x-text="lei(calc(b).client)"></div>
+            <div class="text-[11px] text-slate-400" x-text="(calc(b).procent*100).toFixed(1) + '% contribuție'"></div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500">Punctaj detaliat</div>
+            <div class="text-[11px] text-slate-600 leading-relaxed">
+              contribuție: <b x-text="calc(b).p_contrib.toFixed(1)"></b><br>
+              capacitate: <b x-text="calc(b).p_cap.toFixed(0)"></b> ·
+              PV: <b x-text="calc(b).p_pv.toFixed(1)"></b>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 text-xs text-slate-500" x-show="f.consum_lunar > 0">
+          Autonomie estimată: <b x-text="autonomie(b)"></b> la consumul tău mediu.
+        </div>
+
+        <button @click="alege(b)" class="mt-4 w-full py-3 rounded-lg font-bold"
+          :class="f.baterie_id===b.id ? 'bg-emerald-600 text-white' : 'border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50'"
+          x-text="f.baterie_id===b.id ? '✓ Bateria aleasă' : 'Aleg această baterie'"></button>
+      </div>
+    </template>
+
+    <div x-show="bateriiCompatibile().length===0" class="bg-white rounded-xl shadow p-6 text-center text-slate-500">
+      Nu avem momentan o baterie potrivită pentru configurația ta, dar te putem ajuta cu o soluție personalizată.
+      Trimite-ne datele și te sunăm.
+      <button @click="f.baterie_id='personalizat'; trimite()" class="mt-4 w-full bg-emerald-600 text-white font-bold py-3 rounded-lg">Cere ofertă personalizată</button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6" x-show="f.baterie_id && f.baterie_id!=='personalizat'">
+      <button @click="trimite()" :disabled="seTrimite" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-lg text-lg" x-text="seTrimite ? 'Se trimite...' : 'Trimite cererea de ofertă →'"></button>
+      <p class="text-xs text-slate-400 text-center mt-2">Primești oferta fermă + toate datele pentru înscrierea AFM. Fără nicio obligație.</p>
+      <p class="text-xs text-red-500 text-center mt-1" x-show="eroareTrimitere" x-text="eroareTrimitere"></p>
+    </div>
+
+    <button @click="pas=3" class="text-sm text-slate-500 underline">← Înapoi la datele de contact</button>
+  </section>
+
+  <!-- CONFIRMARE + PACHET AFM -->
+  <section x-show="trimis" class="space-y-5">
+    <div class="bg-emerald-600 text-white rounded-xl shadow p-6 text-center">
+      <div class="text-3xl">✓</div>
+      <h2 class="text-xl font-bold mt-1">Cererea ta a fost trimisă!</h2>
+      <p class="text-emerald-100 text-sm mt-1">Te contactăm în cel mai scurt timp cu oferta fermă. Mai jos ai deja toate datele pentru înscrierea în programul AFM — salvează-le sau fă o captură de ecran.</p>
+    </div>
+
+    <template x-if="bateriaAleasa()">
+    <div class="bg-white rounded-xl shadow p-6">
+      <h3 class="font-bold text-lg">Datele tale pentru cererea de finanțare AFM</h3>
+      <p class="text-xs text-slate-500 mb-3">Exact valorile pe care le vei completa în aplicația AFM (secțiunile B și C din cererea de finanțare):</p>
+      <table class="w-full text-sm">
+        <tbody>
+          <tr class="border-b"><td class="py-2 text-slate-500">Capacitatea sistemului de stocare</td><td class="py-2 font-bold text-right" x-text="bateriaAleasa().capacitate_kwh + ' kWh'"></td></tr>
+          <tr class="border-b"><td class="py-2 text-slate-500">Puterea instalată a sistemului PV</td><td class="py-2 font-bold text-right" x-text="f.putere_pv + ' kW'"></td></tr>
+          <tr class="border-b"><td class="py-2 text-slate-500">Valoarea totală a proiectului</td><td class="py-2 font-bold text-right" x-text="lei(calc(bateriaAleasa()).total)"></td></tr>
+          <tr class="border-b"><td class="py-2 text-slate-500">Contribuția proprie</td><td class="py-2 font-bold text-right" x-text="lei(calc(bateriaAleasa()).client) + ' (' + (calc(bateriaAleasa()).procent*100).toFixed(1) + '%)'"></td></tr>
+          <tr class="border-b"><td class="py-2 text-slate-500">Finanțare solicitată de la AFM</td><td class="py-2 font-bold text-right text-emerald-600" x-text="lei(calc(bateriaAleasa()).afm)"></td></tr>
+          <tr><td class="py-2 text-slate-500">Punctaj estimat</td><td class="py-2 font-bold text-right" x-text="calc(bateriaAleasa()).punctaj_total.toFixed(1) + ' / 100'"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    </template>
+
+    <div class="bg-white rounded-xl shadow p-6">
+      <h3 class="font-bold text-lg">Documentele de care ai nevoie la înscriere</h3>
+      <p class="text-xs text-slate-500 mb-3">Le încarci în aplicația AFM când se deschide sesiunea. Începe să le aduni de pe acum:</p>
+      <ul class="space-y-2 text-sm">
+        <li class="flex gap-2"><span>📄</span><span><b>Actul de identitate</b> — valabil la data înscrierii</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>Certificat de atestare fiscală de la ANAF</b> (bugetul de stat) — se obține online din Spațiul Privat Virtual</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>Certificat fiscal de la primăria de domiciliu</b> (taxe locale)</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>Certificat fiscal de la primăria locului de montaj</b> — doar dacă e diferit de domiciliu</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>Contractul de prosumator</b> — de la furnizorul de energie</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>Certificatul de racordare</b> — de la operatorul de rețea</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>O factură de energie recentă</b> — maximum 3 luni vechime</span></li>
+      </ul>
+      <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-xs mt-4">
+        <b>Important:</b> documentele emise electronic (PDF de la ANAF etc.) se încarcă în aplicația AFM exact în formatul primit — NU scanate sau fotografiate. Odată trimise, nu mai pot fi modificate.
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+      <h3 class="font-bold text-lg">Cum decurge tot procesul</h3>
+      <ol class="mt-3 space-y-2 text-sm list-decimal ml-5">
+        <li><b>Acum:</b> primești de la noi oferta fermă pentru bateria aleasă.</li>
+        <li><b>Când AFM deschide sesiunea:</b> te înscrii în aplicația AFM cu datele de mai sus. Te ghidăm noi pas cu pas.</li>
+        <li><b>După aprobare:</b> ne selectezi pe noi ca instalator validat în aplicația AFM (ai 90 de zile).</li>
+        <li><b>Montajul:</b> instalăm bateria, o punem în funcțiune și actualizăm certificatul de racordare.</li>
+        <li><b>Plata:</b> tu plătești doar contribuția proprie — finanțarea AFM o încasăm noi direct de la stat.</li>
+      </ol>
+    </div>
+
+    <div class="text-center text-sm text-slate-500">
+      Întrebări? Sună-ne: <b x-text="C.firma.telefon"></b>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bg-slate-900 text-slate-400 text-xs text-center py-6 px-4">
+  <p><span x-text="C.firma.nume"></span> · <span x-text="C.firma.atestat_anre"></span> · <span x-text="C.firma.telefon"></span></p>
+  <p class="mt-1">Calculele au caracter informativ, pe baza ghidului de finanțare AFM 2026. Punctajul final se stabilește de aplicația AFM la înscriere.</p>
+</footer>
+
+<script>
+function calculator() {
+  return {
+    C: window.CATALOG,
+    pas: 1,
+    trimis: false,
+    seTrimite: false,
+    eroareTrimitere: '',
+    f: {
+      prosumator: '', are_baterie: '', activitati: '', datorii: '',
+      putere_pv: null, invertor_model: '', invertor_tip: '', retea: '', consum_lunar: null,
+      nume: '', telefon: '', email: '', judet: '', localitate: '', gdpr: false,
+      contributie_extra: 0, baterie_id: ''
+    },
+
+    // stil butoane optiune
+    btn(activ) {
+      return 'px-4 py-2 rounded-lg border font-medium ' + (activ ? 'bg-slate-900 text-white border-slate-900' : 'bg-white hover:bg-slate-50');
+    },
+
+    lei(v) { return Math.round(v).toLocaleString('ro-RO') + ' lei'; },
+
+    eligibilitateCompletata() {
+      return this.f.prosumator && this.f.are_baterie && this.f.activitati && this.f.datorii;
+    },
+    esteEligibil() {
+      return this.f.prosumator === 'da' && this.f.are_baterie === 'nu'
+        && (this.f.activitati === 'nu' || this.f.activitati === 'contorizare')
+        && this.f.datorii === 'nu';
+    },
+    pas2Valid() {
+      return this.f.putere_pv > 0 && this.f.invertor_tip && this.f.retea;
+    },
+    pas3Valid() {
+      return this.f.nume.trim().length >= 3
+        && /^0\d{9}$/.test(this.f.telefon.replace(/[\s.-]/g, ''))
+        && /.+@.+\..+/.test(this.f.email)
+        && this.f.judet && this.f.localitate.trim() && this.f.gdpr;
+    },
+
+    bateriiCompatibile() {
+      const P = this.C.program;
+      return this.C.baterii.filter(b => {
+        if (!b.activ || b.stoc <= 0) return false;
+        if (b.capacitate_kwh < P.capacitate_minima) return false;
+        // filtru retea: "nustiu" vede tot
+        if (this.f.retea === 'mono' && b.retea === 'tri') return false;
+        if (this.f.retea === 'tri' && b.retea === 'mono') return false;
+        return true;
+      });
+    },
+
+    // calculul financiar + punctaj pentru o baterie
+    calc(b) {
+      const P = this.C.program;
+      const eligibile = b.pret_baterie + b.pret_montaj;
+      const plafon_cost = b.capacitate_kwh * P.standard_cost;
+      const eligibile_plafonate = Math.min(eligibile, plafon_cost);
+      const invertor_cost = (this.f.invertor_tip === 'hibrid') ? 0 : b.pret_invertor_hibrid;
+      const total = b.pret_baterie + b.pret_montaj + invertor_cost;
+      const afm_baza = Math.min(total * P.procent_finantare, P.plafon_finantare, eligibile_plafonate);
+      const afm = Math.max(0, afm_baza - this.f.contributie_extra);
+      const client = total - afm;
+      const procent = client / total;
+      const p_contrib = Math.min(Math.max(P.punctaj_contrib_coef * procent - P.punctaj_contrib_minus, 0), P.punctaj_contrib_max);
+      const p_cap = Math.min(b.capacitate_kwh, P.punctaj_capacitate_max);
+      const p_pv = Math.min(this.f.putere_pv || 0, P.punctaj_pv_max);
+      return { eligibile, plafon_cost, invertor_cost, total, afm, client, procent, p_contrib, p_cap, p_pv, punctaj_total: p_contrib + p_cap + p_pv };
+    },
+
+    autonomie(b) {
+      const consum_zi = this.f.consum_lunar / 30;
+      if (!consum_zi) return '-';
+      const ore = (b.capacitate_utila_kwh / consum_zi) * 24;
+      if (ore >= 24) return (ore / 24).toFixed(1) + ' zile';
+      return Math.round(ore) + ' ore';
+    },
+
+    bateriaAleasa() {
+      return this.C.baterii.find(b => b.id === this.f.baterie_id) || null;
+    },
+
+    alege(b) { this.f.baterie_id = b.id; },
+
+    async trimite() {
+      this.seTrimite = true;
+      this.eroareTrimitere = '';
+      const b = this.bateriaAleasa();
+      const rez = b ? this.calc(b) : null;
+      const date = {
+        ...this.f,
+        baterie: b ? (b.marca + ' ' + b.model + ' ' + b.capacitate_kwh + 'kWh') : 'oferta personalizata',
+        valoare_totala: rez ? Math.round(rez.total) : '',
+        finantare_afm: rez ? Math.round(rez.afm) : '',
+        contributie_client: rez ? Math.round(rez.client) : '',
+        punctaj: rez ? rez.punctaj_total.toFixed(1) : ''
+      };
+      try {
+        const r = await fetch('api/salveaza-lead.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(date)
+        });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.eroare || 'raspuns invalid');
+        this.trimis = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        this.eroareTrimitere = 'Nu s-a putut trimite. Te rugam suna-ne direct la ' + this.C.firma.telefon;
+      }
+      this.seTrimite = false;
+    }
+  };
+}
+</script>
+</body>
+</html>
