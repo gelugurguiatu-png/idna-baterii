@@ -11,7 +11,7 @@ return array(
         'nume' => 'iDNA Power',
         'telefon' => '0744 555 445',
         'email' => 'afm.baterii@idnapower.ro',
-        'atestat_anre' => 'Atestat ANRE tip B',
+        'atestat_anre' => 'Atestat ANRE C1A, C2A',
         'judete' => array('Galati', 'Braila', 'Vrancea', 'Vaslui', 'Tulcea'),
     ),
     'program' => array(

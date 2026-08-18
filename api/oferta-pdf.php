@@ -195,14 +195,10 @@ $IMG = __DIR__ . '/../img/';
 // =====================================================================
 $pdf->AddPage();
 
-// decor romburi verzi stanga-sus (ca in model)
-$pdf->Romb(8, 15, 16, $VERDE);
-$pdf->Romb(38, 6, 9, $VERDE_INCHIS);
-$pdf->Romb(78, 12, 7, $VERDE);
-$pdf->Romb(12, 52, 6, $VERDE_INCHIS);
-// foto panouri (are masca alba tip romb inclusa in imagine)
+// blocul foto + romburi verzi (extras din oferta model, cu decorul inclus) -
+// ancorat in coltul stanga-sus ca in original
 if (file_exists($IMG . 'coperta-foto.jpg')) {
-    $pdf->Image($IMG . 'coperta-foto.jpg', 22, 18, 88);
+    $pdf->Image($IMG . 'coperta-foto.jpg', 0, 0, 118);
 }
 // logo dreapta-sus
 if (file_exists($IMG . 'logo-idna.png')) {
@@ -238,21 +234,29 @@ $pdf->SetFont('DejaVu', '', 10);
 $pdf->SetX(15);
 $pdf->Cell(180, 6, 'Program AFM 2026 - instalare sisteme de stocare a energiei din surse regenerabile', 0, 1, 'C');
 
-// banda verde jos cu datele firmei
-$pdf->SetFillColor($VERDE[0], $VERDE[1], $VERDE[2]);
-$pdf->RoundedRect(8, 252, 194, 38, 6, 'F');
+// banda verde jos cu iconite (imaginea originala din oferta model) + texte peste
+$bandaY = 254;
+if (file_exists($IMG . 'banda-contact.png')) {
+    $pdf->Image($IMG . 'banda-contact.png', 8, $bandaY, 194); // inaltime rezultata ~34 mm
+} else {
+    $pdf->SetFillColor($VERDE[0], $VERDE[1], $VERDE[2]);
+    $pdf->RoundedRect(8, $bandaY, 194, 34, 6, 'F');
+}
 $pdf->SetTextColor(255, 255, 255);
 $pdf->SetFont('DejaVu', 'B', 15);
-$pdf->SetXY(8, 256);
+$pdf->SetXY(8, $bandaY + 4);
 $pdf->Cell(194, 8, 'S.C. iDNA POWER S.R.L.', 0, 1, 'C');
+// pozitiile iconitelor din imaginea benzii (px -> mm la latime 194):
+// telefon ~18 mm, pin adresa ~71 mm, plic email ~142 mm; textul incepe la dreapta lor
+$icoY = $bandaY + 16.5;
 $pdf->SetFont('DejaVu', 'B', 9);
-$pdf->SetXY(14, 267);  $pdf->Cell(60, 5, 'Tel.', 0, 0, 'C');
-$pdf->SetXY(75, 267);  $pdf->Cell(60, 5, 'Adresă', 0, 0, 'C');
-$pdf->SetXY(136, 267); $pdf->Cell(60, 5, 'E-mail', 0, 0, 'C');
+$pdf->SetXY(8 + 24, $icoY);        $pdf->Cell(42, 4.5, 'Tel.', 0, 0, 'L');
+$pdf->SetXY(8 + 77, $icoY);        $pdf->Cell(58, 4.5, 'Adresă', 0, 0, 'L');
+$pdf->SetXY(8 + 148, $icoY);       $pdf->Cell(46, 4.5, 'E-mail', 0, 0, 'L');
 $pdf->SetFont('DejaVu', '', 9);
-$pdf->SetXY(14, 272);  $pdf->Cell(60, 5, $F['telefon'], 0, 0, 'C');
-$pdf->SetXY(75, 272);  $pdf->MultiCell(60, 4.5, "Str. Cuza Vodă, Nr. 102B,\nFocșani, Vrancea", 0, 'C');
-$pdf->SetXY(136, 272); $pdf->Cell(60, 5, $F['email'], 0, 0, 'C');
+$pdf->SetXY(8 + 24, $icoY + 4.8);  $pdf->Cell(42, 4.5, $F['telefon'], 0, 0, 'L');
+$pdf->SetXY(8 + 77, $icoY + 4.8);  $pdf->MultiCell(58, 4.3, "Str. Cuza Vodă, Nr. 102B,\nFocșani, Vrancea", 0, 'L');
+$pdf->SetXY(8 + 148, $icoY + 4.8); $pdf->Cell(46, 4.5, $F['email'], 0, 0, 'L');
 
 // =====================================================================
 // PAGINA 2 - OFERTA FINANCIARA
