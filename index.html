@@ -183,17 +183,12 @@
         <select x-model="f.judet" class="mt-1 w-full border rounded-lg p-3 bg-white">
           <option value="">alege...</option>
           <template x-for="j in C.firma.judete" :key="j"><option :value="j" x-text="j"></option></template>
-          <option value="alt">alt județ</option>
         </select>
       </div>
       <div class="md:col-span-2">
         <label class="font-medium">Localitatea</label>
         <input type="text" x-model="f.localitate" class="mt-1 w-full border rounded-lg p-3" placeholder="ex: Galați">
       </div>
-    </div>
-
-    <div x-show="f.judet==='alt'" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
-      Momentan facem montaje în: <b x-text="C.firma.judete.join(', ')"></b>. Lasă-ne totuși datele — te contactăm dacă putem ajunge la tine.
     </div>
 
     <label class="flex items-start gap-3 text-sm">

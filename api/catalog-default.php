@@ -12,7 +12,14 @@ return array(
         'telefon' => '0744 555 445',
         'email' => 'afm.baterii@idnapower.ro',
         'atestat_anre' => 'Atestat ANRE C1A, C2A',
-        'judete' => array('Galati', 'Braila', 'Vrancea', 'Vaslui', 'Tulcea'),
+        'judete' => array(
+            'Alba', 'Arad', 'Arges', 'Bacau', 'Bihor', 'Bistrita-Nasaud', 'Botosani',
+            'Brasov', 'Braila', 'Bucuresti', 'Buzau', 'Calarasi', 'Caras-Severin',
+            'Cluj', 'Constanta', 'Covasna', 'Dambovita', 'Dolj', 'Galati', 'Giurgiu',
+            'Gorj', 'Harghita', 'Hunedoara', 'Ialomita', 'Iasi', 'Ilfov', 'Maramures',
+            'Mehedinti', 'Mures', 'Neamt', 'Olt', 'Prahova', 'Salaj', 'Satu Mare',
+            'Sibiu', 'Suceava', 'Teleorman', 'Timis', 'Tulcea', 'Valcea', 'Vaslui', 'Vrancea'
+        ),
     ),
     'program' => array(
         'procent_finantare' => 0.75,
