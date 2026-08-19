@@ -240,8 +240,11 @@
     </div>
 
     <!-- carduri baterii -->
-    <template x-for="b in bateriiCompatibile()" :key="b.id">
+    <template x-for="(b, idx) in bateriiCompatibile()" :key="b.id">
       <div class="card-baterie bg-white rounded-xl shadow p-6" :class="f.baterie_id===b.id ? 'ring-2 ring-emerald-500' : ''">
+        <div x-show="idx === 0" class="mb-3">
+          <span class="inline-block bg-amber-400 text-amber-950 text-xs font-extrabold px-3 py-1 rounded-full">⭐ RECOMANDAT — cu ea atingi punctajul tău maxim</span>
+        </div>
         <div class="flex flex-wrap items-start justify-between gap-2">
           <div>
             <div class="text-lg font-bold" x-text="b.marca + ' ' + b.model"></div>
@@ -286,6 +289,13 @@
 
         <div class="mt-3 text-xs text-amber-600" x-show="f.contributie_extra > calc(b).extra_util_max">
           La această baterie se aplică doar <b x-text="'+' + lei(calc(b).extra_aplicat)"></b> din contribuția suplimentară — punctajul contribuției e deja la maximul de 40 pct, restul banilor nu ar mai aduce puncte.
+        </div>
+
+        <!-- potentialul de punctaj: cat poate urca daca isi creste contributia -->
+        <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800 flex items-center justify-between gap-3"
+          x-show="punctajMaxim(b) - calc(b).punctaj_total > 0.05">
+          <span>Cu această baterie poți urca la <b x-text="punctajMaxim(b).toFixed(1) + ' pct'"></b> mărindu-ți contribuția cu <b x-text="'+' + lei(calc(b).extra_util_max - calc(b).extra_aplicat)"></b>.</span>
+          <button @click="f.contributie_extra = calc(b).extra_util_max" class="shrink-0 border border-amber-500 text-amber-800 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-100">Aplică</button>
         </div>
 
         <div class="mt-3 text-xs text-slate-500" x-show="f.consum_lunar > 0">
@@ -476,7 +486,18 @@ function calculator() {
         if (compat === 'fronius' && !(marca === 'fronius' && esteHibrid)) return false;
         if (compat === 'huawei' && marca !== 'huawei') return false;
         return true;
-      });
+      })
+      // prima pozitie = bateria cu care clientul poate atinge punctajul maxim;
+      // la egalitate, cea cu pretul total mai mic
+      .sort((a, b) => this.punctajMaxim(b) - this.punctajMaxim(a) || this.calc(a).total - this.calc(b).total);
+    },
+
+    // punctajul maxim atingibil cu o baterie: capacitate + PV + contributia la plafon (40)
+    punctajMaxim(b) {
+      const P = this.C.program;
+      return Math.min(b.capacitate_kwh, P.punctaj_capacitate_max)
+        + Math.min(this.f.putere_pv || 0, P.punctaj_pv_max)
+        + P.punctaj_contrib_max;
     },
 
     // eticheta "Compatibil cu" de pe card: textul operatorului sau, daca lipseste,
