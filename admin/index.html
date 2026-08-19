@@ -164,7 +164,7 @@
       <!-- lista ofertelor -->
       <div class="bg-white rounded-xl shadow p-6 overflow-x-auto">
         <h2 class="font-bold mb-3">Lista ofertelor (cele mai noi primele)</h2>
-        <table class="w-full text-sm min-w-[900px]">
+        <table class="w-full text-sm min-w-[1400px]">
           <thead>
             <tr class="text-left text-slate-500 border-b">
               <th class="py-2 pr-2">Nr.</th>
@@ -174,6 +174,11 @@
               <th class="pr-2">E-mail</th>
               <th class="pr-2">Localitate</th>
               <th class="pr-2">Baterie</th>
+              <th class="pr-2 text-right">PV (kW)</th>
+              <th class="pr-2">Invertor (marcă/model)</th>
+              <th class="pr-2">Hibrid?</th>
+              <th class="pr-2">Rețea</th>
+              <th class="pr-2 text-right">Consum (kWh/lună)</th>
               <th class="pr-2 text-right">Contribuție client</th>
               <th class="pr-2 text-right">Punctaj</th>
               <th></th>
@@ -189,6 +194,11 @@
                 <td class="pr-2"><a :href="'mailto:' + o.email" class="text-emerald-700 underline" x-text="o.email"></a></td>
                 <td class="pr-2" x-text="(o.localitate || '') + (o.judet ? ', ' + o.judet : '')"></td>
                 <td class="pr-2" x-text="o.baterie"></td>
+                <td class="pr-2 text-right" x-text="o.putere_pv ? o.putere_pv : '-'"></td>
+                <td class="pr-2" x-text="o.invertor_model || '-'"></td>
+                <td class="pr-2" x-text="etichetaInvertor(o.invertor_tip)"></td>
+                <td class="pr-2" x-text="etichetaRetea(o.retea)"></td>
+                <td class="pr-2 text-right" x-text="o.consum_lunar ? o.consum_lunar : '-'"></td>
                 <td class="pr-2 text-right whitespace-nowrap" x-text="Number(o.contributie_client).toLocaleString('ro-RO') + ' lei'"></td>
                 <td class="pr-2 text-right font-bold" x-text="Number(o.punctaj).toFixed(1)"></td>
                 <td class="text-right whitespace-nowrap">
@@ -379,6 +389,14 @@ function admin() {
       const r = await fetch('../api/admin-oferte.php');
       const j = await r.json();
       if (j.ok) this.oferte = j.oferte;
+    },
+
+    // etichete lizibile pentru valorile salvate din formular
+    etichetaInvertor(tip) {
+      return { hibrid: 'da', clasic: 'nu (clasic)', nustiu: 'nu știe' }[tip] || '-';
+    },
+    etichetaRetea(retea) {
+      return { mono: 'monofazat', tri: 'trifazat', nustiu: 'nu știe' }[retea] || '-';
     },
 
     // soft-delete oferta (doar admin) - dispare din lista, numerotarea ramane intacta
