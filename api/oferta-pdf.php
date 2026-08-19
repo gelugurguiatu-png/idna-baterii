@@ -311,10 +311,12 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $pdf->SetFont('DejaVu', 'B', 17);
     $pdf->Cell(54, 8, nr_ro($punctaj, 1) . ' / 100', 0, 1, 'R');
     $pdf->SetTextColor(70, 70, 70);
-    $pdf->SetFont('DejaVu', '', 9.5);
-    $pdf->SetXY(18, $yP + 15);
-    $pdf->Cell(174, 5.5, 'Contribuție proprie: ' . nr_ro($p_contrib, 1) . ' pct (max 40)   ·   Capacitate stocare: ' . nr_ro($p_cap, 1) . ' pct (max 40)   ·   Putere fotovoltaică: ' . nr_ro($p_pv, 1) . ' pct (max 20)', 0, 1);
-    $pdf->SetXY(18, $yP + 22);
+    $pdf->SetFont('DejaVu', '', 9);
+    $pdf->SetXY(18, $yP + 14);
+    // MultiCell: daca textul e prea lat, se imparte pe doua randuri in loc sa iasa din chenar
+    $pdf->MultiCell(174, 5, 'Contribuție: ' . nr_ro($p_contrib, 1) . ' pct (max 40)  ·  Capacitate: ' . nr_ro($p_cap, 1) . ' pct (max 40)  ·  Putere PV: ' . nr_ro($p_pv, 1) . ' pct (max 20)', 0, 'L');
+    $yNota = max($pdf->GetY() + 1, $yP + 21);
+    $pdf->SetXY(18, $yNota);
     $pdf->SetFont('DejaVu', '', 8.5);
     $pdf->MultiCell(174, 4.5, 'Proiectele se finanțează în ordinea descrescătoare a punctajului, în limita bugetului sesiunii. Punctajul final se calculează de aplicația AFM pe baza datelor declarate la înscriere.', 0, 'L');
 
