@@ -22,9 +22,19 @@
       <div class="text-xl font-bold" x-text="C.firma.nume"></div>
       <div class="text-xs text-emerald-200" x-text="C.firma.atestat_anre"></div>
     </div>
-    <div class="text-right text-sm">
-      <div class="font-semibold" x-text="C.firma.telefon"></div>
-      <div class="text-emerald-200" x-text="C.firma.email"></div>
+    <div class="text-right text-sm space-y-1.5">
+      <a :href="'tel:' + C.firma.telefon.replace(/\s/g, '')" class="flex items-center justify-end gap-2 font-semibold hover:text-amber-300">
+        <span class="w-6 h-6 rounded-full bg-white text-[#04352a] flex items-center justify-center shrink-0">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </span>
+        <span x-text="C.firma.telefon"></span>
+      </a>
+      <a :href="'mailto:' + C.firma.email" class="flex items-center justify-end gap-2 text-emerald-200 hover:text-amber-300">
+        <span class="w-6 h-6 rounded-full bg-white text-[#04352a] flex items-center justify-center shrink-0">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+        </span>
+        <span x-text="C.firma.email"></span>
+      </a>
     </div>
   </div>
 </header>
