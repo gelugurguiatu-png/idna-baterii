@@ -124,9 +124,19 @@
     </div>
 
     <div>
-      <label class="font-medium">Marca și modelul invertorului tău</label>
-      <p class="text-xs text-slate-500">Scrie ce e pe eticheta invertorului (ex: Huawei SUN2000-5KTL, Growatt MIN 5000TL-XH).</p>
-      <input type="text" x-model="f.invertor_model" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: Huawei SUN2000-5KTL-L1">
+      <label class="font-medium">Marca invertorului tău</label>
+      <p class="text-xs text-slate-500">O găsești pe eticheta invertorului. După ea îți arătăm doar bateriile compatibile.</p>
+      <select x-model="f.invertor_marca" class="mt-2 w-full border rounded-lg p-3 bg-white">
+        <option value="">alege marca...</option>
+        <template x-for="m in marciInvertoare" :key="m"><option :value="m" x-text="m"></option></template>
+        <option value="alta">Altă marcă</option>
+        <option value="nustiu">Nu știu</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="font-medium">Modelul invertorului <span class="text-slate-400 text-sm">— opțional</span></label>
+      <input type="text" x-model="f.invertor_model" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: SUN2000-5KTL-L1, Symo GEN24 8.0">
     </div>
 
     <div>
@@ -241,7 +251,7 @@
               <span x-text="'garanție ' + b.garantie_ani + ' ani'"></span> ·
               <span x-text="b.cicluri.toLocaleString('ro-RO') + ' cicluri'"></span>
             </div>
-            <div class="text-xs text-slate-400 mt-1" x-text="'Compatibil cu: ' + b.invertoare_compatibile"></div>
+            <div class="text-xs text-slate-400 mt-1" x-text="'Compatibil cu: ' + etichetaCompatibil(b)"></div>
           </div>
           <div class="text-right">
             <div class="text-2xl font-extrabold text-emerald-600" x-text="calc(b).punctaj_total.toFixed(1) + ' pct'"></div>
@@ -401,9 +411,10 @@ function calculator() {
     eroareTrimitere: '',
     oferta: null,
     emailTrimis: false,
+    marciInvertoare: ['Fronius', 'Huawei', 'Deye', 'Growatt', 'SolaX', 'Solis', 'GoodWe', 'Sungrow', 'Sigenergy', 'Victron'],
     f: {
       prosumator: '', are_baterie: '', activitati: '', datorii: '',
-      putere_pv: null, invertor_model: '', invertor_tip: '', retea: '', consum_lunar: null,
+      putere_pv: null, invertor_marca: '', invertor_model: '', invertor_tip: '', retea: '', consum_lunar: null,
       nume: '', telefon: '', email: '', judet: '', localitate: '', gdpr: false,
       contributie_extra: 0, baterie_id: ''
     },
@@ -424,7 +435,7 @@ function calculator() {
         && this.f.datorii === 'nu';
     },
     pas2Valid() {
-      return this.f.putere_pv > 0 && this.f.invertor_tip && this.f.retea;
+      return this.f.putere_pv > 0 && this.f.invertor_marca && this.f.invertor_tip && this.f.retea;
     },
     pas3Valid() {
       return this.f.nume.trim().length >= 3
@@ -435,14 +446,31 @@ function calculator() {
 
     bateriiCompatibile() {
       const P = this.C.program;
+      const marca = (this.f.invertor_marca || '').toLowerCase();
+      const esteHibrid = this.f.invertor_tip === 'hibrid';
       return this.C.baterii.filter(b => {
         if (!b.activ || b.stoc <= 0) return false;
         if (b.capacitate_kwh < P.capacitate_minima) return false;
         // filtru retea: "nustiu" vede tot
         if (this.f.retea === 'mono' && b.retea === 'tri') return false;
         if (this.f.retea === 'tri' && b.retea === 'mono') return false;
+        // filtru familie de compatibilitate cu invertorul (regulile iDNA):
+        //   universal -> orice invertor; fronius -> doar Fronius HIBRID; huawei -> doar Huawei
+        const compat = b.compatibilitate || 'universal';
+        if (compat === 'fronius' && !(marca === 'fronius' && esteHibrid)) return false;
+        if (compat === 'huawei' && marca !== 'huawei') return false;
         return true;
       });
+    },
+
+    // eticheta "Compatibil cu" de pe card: textul operatorului sau, daca lipseste,
+    // una generata din familia de compatibilitate
+    etichetaCompatibil(b) {
+      if (b.invertoare_compatibile) return b.invertoare_compatibile;
+      const compat = b.compatibilitate || 'universal';
+      if (compat === 'fronius') return 'invertoare Fronius hibride';
+      if (compat === 'huawei') return 'invertoare Huawei';
+      return 'orice invertor (sistem cu invertor propriu inclus)';
     },
 
     // calculul financiar + punctaj pentru o baterie
@@ -498,8 +526,12 @@ function calculator() {
       this.eroareTrimitere = '';
       const b = this.bateriaAleasa();
       const rez = b ? this.calc(b) : null;
+      const marcaText = this.f.invertor_marca === 'alta' ? 'alta marca'
+        : this.f.invertor_marca === 'nustiu' ? 'nu stie marca'
+        : this.f.invertor_marca;
       const date = {
         ...this.f,
+        invertor_model: (marcaText + ' ' + (this.f.invertor_model || '')).trim(),
         baterie: b ? (b.marca + ' ' + b.model + ' ' + b.capacitate_kwh + 'kWh') : 'oferta personalizata',
         valoare_totala: rez ? Math.round(rez.total) : '',
         finantare_afm: rez ? Math.round(rez.afm) : '',

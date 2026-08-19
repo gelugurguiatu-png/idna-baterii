@@ -119,6 +119,13 @@
                   <option value="mono">monofazat</option><option value="tri">trifazat</option><option value="ambele">ambele</option>
                 </select>
               </div>
+              <div><label class="text-xs text-slate-500">Compatibilitate invertor</label>
+                <select x-model="b.compatibilitate" class="w-full border rounded p-2 bg-white">
+                  <option value="universal">Universală (orice invertor)</option>
+                  <option value="fronius">Doar Fronius hibrid</option>
+                  <option value="huawei">Doar Huawei</option>
+                </select>
+              </div>
               <div><label class="text-xs text-slate-500">Capacitate (kWh) — min 12 eligibil</label><input type="number" step="0.1" x-model.number="b.capacitate_kwh" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Capacitate utilă (kWh)</label><input type="number" step="0.1" x-model.number="b.capacitate_utila_kwh" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Garanție (ani) — min 5</label><input type="number" x-model.number="b.garantie_ani" class="w-full border rounded p-2"></div>
@@ -355,7 +362,7 @@ function admin() {
       this.baterii.push({
         id: '', marca: '', model: '', tehnologie: 'LiFePO4',
         capacitate_kwh: null, capacitate_utila_kwh: null,
-        garantie_ani: 10, cicluri: 6000, retea: 'ambele',
+        garantie_ani: 10, cicluri: 6000, retea: 'ambele', compatibilitate: 'universal',
         invertoare_compatibile: '', pret_baterie: null, pret_montaj: null,
         pret_invertor_hibrid: 0, stoc: 1, termen_zile: 14, activ: false
       });

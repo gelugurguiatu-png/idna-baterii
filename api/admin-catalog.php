@@ -59,6 +59,13 @@ foreach ($date['baterii'] as $idx => $b) {
     $retea = isset($b['retea']) ? $b['retea'] : 'ambele';
     if (!in_array($retea, array('mono', 'tri', 'ambele'), true)) { $retea = 'ambele'; }
 
+    // familia de compatibilitate cu invertorul clientului:
+    //   universal = orice invertor (sisteme retrofit cu invertor propriu)
+    //   fronius   = doar invertoare Fronius HIBRIDE
+    //   huawei    = doar invertoare Huawei
+    $compat = isset($b['compatibilitate']) ? $b['compatibilitate'] : 'universal';
+    if (!in_array($compat, array('universal', 'fronius', 'huawei'), true)) { $compat = 'universal'; }
+
     $id = isset($b['id']) && trim($b['id']) !== '' ? trim($b['id']) : strtolower(preg_replace('/[^a-z0-9]+/i', '-', $marca . '-' . $model));
     while (in_array($id, $ids, true)) { $id .= '-2'; }
     $ids[] = $id;
@@ -73,6 +80,7 @@ foreach ($date['baterii'] as $idx => $b) {
         'garantie_ani' => isset($b['garantie_ani']) ? intval($b['garantie_ani']) : 0,
         'cicluri' => isset($b['cicluri']) ? intval($b['cicluri']) : 0,
         'retea' => $retea,
+        'compatibilitate' => $compat,
         'invertoare_compatibile' => isset($b['invertoare_compatibile']) ? trim($b['invertoare_compatibile']) : '',
         'pret_baterie' => $pret,
         'pret_montaj' => $montaj,
