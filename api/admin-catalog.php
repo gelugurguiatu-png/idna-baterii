@@ -21,6 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $din_json = true;
         }
     }
+    // compatibilitatea nesetata se deduce din marca (aceeasi regula ca in catalog.php);
+    // la prima salvare din admin valoarea devine explicita in catalog.json
+    foreach ($baterii as $i => $b) {
+        if (empty($b['compatibilitate'])) {
+            $marca = strtoupper(isset($b['marca']) ? $b['marca'] : '');
+            if (strpos($marca, 'FRONIUS') !== false) { $baterii[$i]['compatibilitate'] = 'fronius'; }
+            elseif (strpos($marca, 'HUAWEI') !== false) { $baterii[$i]['compatibilitate'] = 'huawei'; }
+            else { $baterii[$i]['compatibilitate'] = 'universal'; }
+        }
+    }
     echo json_encode(array('ok' => true, 'baterii' => $baterii, 'salvat_pe_server' => $din_json), JSON_UNESCAPED_UNICODE);
     exit;
 }

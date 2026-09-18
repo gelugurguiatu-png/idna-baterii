@@ -17,10 +17,18 @@ if (file_exists($fisierJson)) {
     }
 }
 
-// public: doar bateriile active
+// public: doar bateriile active; compatibilitatea nesetata se deduce din marca
+// (bateriile FRONIUS merg doar cu invertoare Fronius hibride, LUNA doar cu Huawei)
 $active = array();
 foreach ($catalog['baterii'] as $b) {
-    if (!empty($b['activ'])) { $active[] = $b; }
+    if (empty($b['activ'])) { continue; }
+    if (empty($b['compatibilitate'])) {
+        $marca = strtoupper(isset($b['marca']) ? $b['marca'] : '');
+        if (strpos($marca, 'FRONIUS') !== false) { $b['compatibilitate'] = 'fronius'; }
+        elseif (strpos($marca, 'HUAWEI') !== false) { $b['compatibilitate'] = 'huawei'; }
+        else { $b['compatibilitate'] = 'universal'; }
+    }
+    $active[] = $b;
 }
 $catalog['baterii'] = $active;
 

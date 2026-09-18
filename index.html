@@ -215,25 +215,27 @@
     <div class="bg-white rounded-xl shadow p-6">
       <h2 class="text-lg font-bold">Pasul 4 · Alege bateria potrivită</h2>
       <p class="text-sm text-slate-500 mt-1">Îți afișăm doar bateriile compatibile cu invertorul tău, cu punctajul pe care îl obții cu fiecare. Proiectele se aprobă în ordinea punctajului, în limita bugetului AFM.</p>
+      <p class="text-xs text-slate-500 mt-2" x-show="sliderMax() > 0">Fiecare leu de aport propriu îți crește punctajul (regula AFM: punctaj contribuție = 30 × contribuția proprie ÷ finanțarea AFM, max 50 pct). Bara de aport rămâne vizibilă sus cât derulezi lista, iar bateriile „se încarcă" pe măsură ce crești aportul — verde plin = punctaj maxim.</p>
+    </div>
 
-      <!-- bara + caseta aport propriu (sincronizate, plafonate la maximul util) -->
-      <div class="mt-4 bg-slate-50 rounded-lg p-4" x-show="sliderMax() > 0">
-        <label class="font-medium text-sm">Aport propriu — crește-ți punctajul și șansele la finanțare <span class="text-slate-400">(opțional)</span></label>
-        <div class="flex items-center gap-4 mt-2">
+    <!-- bara aport propriu LIPICIOASA: ramane sus pe ecran cat derulezi cardurile -->
+    <div class="sticky top-2 z-40" x-show="sliderMax() > 0">
+      <div class="bg-white/95 backdrop-blur rounded-xl shadow-lg ring-1 ring-emerald-300 p-3">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-bold text-slate-700 shrink-0 hidden sm:block">Aport propriu</span>
           <input type="range" min="0" :max="sliderMax()" step="500" x-model.number="f.contributie_extra" class="flex-1">
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 shrink-0">
             <input type="number" min="0" :max="sliderMax()" step="500" x-model.number="f.contributie_extra"
               @change="f.contributie_extra = Math.min(sliderMax(), Math.max(0, Number(f.contributie_extra) || 0))"
-              class="w-28 border rounded-lg p-2 text-right font-bold">
+              class="w-24 border rounded-lg p-2 text-right font-bold">
             <span class="text-sm text-slate-500">lei</span>
           </div>
         </div>
-        <div class="flex justify-between text-xs text-slate-500 mt-1">
+        <div class="flex justify-between text-[11px] text-slate-500 mt-0.5">
           <span>+0 lei</span>
           <span class="font-bold text-slate-700" x-text="'+' + lei(f.contributie_extra) + ' aport propriu'"></span>
           <span x-text="'+' + lei(sliderMax())"></span>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Fiecare leu de aport îți crește punctajul (regula AFM: punctaj contribuție = 30 × contribuția proprie ÷ finanțarea AFM, max 50 pct). Bara e limitată automat la suma peste care punctajul nu mai crește la nicio baterie.</p>
       </div>
     </div>
 
@@ -255,8 +257,17 @@
             <div class="text-xs text-slate-400 mt-1" x-text="'Compatibil cu: ' + etichetaCompatibil(b)"></div>
           </div>
           <div class="text-right">
-            <div class="text-2xl font-extrabold text-emerald-600" x-text="calc(b).punctaj_total.toFixed(1) + ' pct'"></div>
-            <div class="text-xs text-slate-400">punctaj estimat (max 100)</div>
+            <!-- baterie care se incarca: umplere = punctajul, culoare rosu -> verde -->
+            <div class="inline-flex items-center">
+              <div class="relative w-36 h-9 rounded-md border-2 border-slate-500 bg-white overflow-hidden">
+                <div class="absolute inset-y-0 left-0 transition-all duration-300"
+                  :style="'width:' + Math.min(100, calc(b).punctaj_total) + '%; background-color: hsl(' + Math.round(Math.min(100, calc(b).punctaj_total) * 1.2) + ', 72%, 45%)'"></div>
+                <div class="absolute inset-0 flex items-center justify-center font-extrabold text-sm text-slate-900" style="text-shadow: 0 0 4px rgba(255,255,255,.9), 0 0 8px rgba(255,255,255,.7)"
+                  x-text="calc(b).punctaj_total.toFixed(1) + ' pct'"></div>
+              </div>
+              <div class="w-1.5 h-4 bg-slate-500 rounded-r-sm"></div>
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">punctaj estimat (max 100)</div>
           </div>
         </div>
 
