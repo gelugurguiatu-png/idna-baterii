@@ -126,10 +126,10 @@
                   <option value="huawei">Doar Huawei</option>
                 </select>
               </div>
-              <div><label class="text-xs text-slate-500">Capacitate (kWh) — min 12 eligibil</label><input type="number" step="0.1" x-model.number="b.capacitate_kwh" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Capacitate (kWh) — min 10 eligibil</label><input type="number" step="0.1" x-model.number="b.capacitate_kwh" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Capacitate utilă (kWh)</label><input type="number" step="0.1" x-model.number="b.capacitate_utila_kwh" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Garanție (ani) — min 5</label><input type="number" x-model.number="b.garantie_ani" class="w-full border rounded p-2"></div>
-              <div><label class="text-xs text-slate-500">Cicluri — min 3000</label><input type="number" x-model.number="b.cicluri" class="w-full border rounded p-2"></div>
+              <div><label class="text-xs text-slate-500">Cicluri — min 5000</label><input type="number" x-model.number="b.cicluri" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Preț baterie cu TVA (lei)</label><input type="number" x-model.number="b.pret_baterie" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Preț montaj cu TVA (lei)</label><input type="number" x-model.number="b.pret_montaj" class="w-full border rounded p-2"></div>
               <div><label class="text-xs text-slate-500">Preț invertor hibrid cu TVA (lei)</label><input type="number" x-model.number="b.pret_invertor_hibrid" class="w-full border rounded p-2"></div>
@@ -137,7 +137,8 @@
               <div class="col-span-2"><label class="text-xs text-slate-500">Invertoare compatibile (text afișat clientului)</label><input type="text" x-model="b.invertoare_compatibile" class="w-full border rounded p-2" placeholder="ex: Deye, SolaX, Growatt (hibride)"></div>
               <div><label class="text-xs text-slate-500">Termen instalare (zile)</label><input type="number" x-model.number="b.termen_zile" class="w-full border rounded p-2"></div>
             </div>
-            <p class="text-xs text-amber-600 mt-2" x-show="b.capacitate_kwh > 0 && b.capacitate_kwh < 12">⚠ Sub 12 kWh — NU e eligibilă în programul AFM, nu va apărea pe site.</p>
+            <p class="text-xs text-amber-600 mt-2" x-show="b.capacitate_kwh > 0 && b.capacitate_kwh < 10">⚠ Sub 10 kWh — NU e eligibilă în programul AFM, nu va apărea pe site.</p>
+            <p class="text-xs text-amber-600 mt-2" x-show="b.cicluri > 0 && b.cicluri < 5000">⚠ Sub 5.000 de cicluri — NU e eligibilă conform ghidului final (Ordin 1904/2026), nu va apărea pe site.</p>
           </div>
         </template>
       </div>
@@ -181,11 +182,9 @@
               <th class="pr-2">E-mail</th>
               <th class="pr-2">Localitate</th>
               <th class="pr-2">Baterie</th>
-              <th class="pr-2 text-right">PV (kW)</th>
               <th class="pr-2">Invertor (marcă/model)</th>
               <th class="pr-2">Hibrid?</th>
               <th class="pr-2">Rețea</th>
-              <th class="pr-2 text-right">Consum (kWh/lună)</th>
               <th class="pr-2 text-right">Contribuție client</th>
               <th class="pr-2 text-right">Punctaj</th>
               <th></th>
@@ -201,11 +200,9 @@
                 <td class="pr-2"><a :href="'mailto:' + o.email" class="text-emerald-700 underline" x-text="o.email"></a></td>
                 <td class="pr-2" x-text="(o.localitate || '') + (o.judet ? ', ' + o.judet : '')"></td>
                 <td class="pr-2" x-text="o.baterie"></td>
-                <td class="pr-2 text-right" x-text="o.putere_pv ? o.putere_pv : '-'"></td>
                 <td class="pr-2" x-text="o.invertor_model || '-'"></td>
                 <td class="pr-2" x-text="etichetaInvertor(o.invertor_tip)"></td>
                 <td class="pr-2" x-text="etichetaRetea(o.retea)"></td>
-                <td class="pr-2 text-right" x-text="o.consum_lunar ? o.consum_lunar : '-'"></td>
                 <td class="pr-2 text-right whitespace-nowrap" x-text="Number(o.contributie_client).toLocaleString('ro-RO') + ' lei'"></td>
                 <td class="pr-2 text-right font-bold" x-text="Number(o.punctaj).toFixed(1)"></td>
                 <td class="text-right whitespace-nowrap">

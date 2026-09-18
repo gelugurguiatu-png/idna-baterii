@@ -21,17 +21,19 @@ return array(
             'Sibiu', 'Suceava', 'Teleorman', 'Timis', 'Tulcea', 'Valcea', 'Vaslui', 'Vrancea'
         ),
     ),
+    // Parametri conform ghidului FINAL: Ordin 1904/11.09.2026
     'program' => array(
-        'procent_finantare' => 0.75,
-        'plafon_finantare' => 15000,
-        'standard_cost' => 1250,
-        'capacitate_minima' => 12,
+        'procent_finantare' => 0.75,       // max 75% din valoarea totala (Art. 5)
+        'plafon_finantare' => 15000,       // max 15.000 lei (Art. 5)
+        'standard_cost' => 1500,           // lei/kWh capacitate (Art. 5 alin. 4)
+        'capacitate_minima' => 10,         // kWh minim eligibil (Art. 16)
+        'cicluri_minime' => 5000,          // cicluri minime (Art. 16 alin. 2 lit. d)
         'contributie_minima' => 0.25,
-        'punctaj_contrib_coef' => 80,
-        'punctaj_contrib_minus' => 10,
-        'punctaj_contrib_max' => 40,
-        'punctaj_capacitate_max' => 40,
-        'punctaj_pv_max' => 20,
+        // punctaj (Art. 19 alin. 4) - DOAR 2 criterii, maxim 100:
+        'punctaj_contrib_coef' => 30,      // punctaj contributie = 30 x contributie / finantare AFM
+        'punctaj_contrib_max' => 50,
+        'punctaj_capacitate_coef' => 2.5,  // punctaj capacitate = kWh x 2,5
+        'punctaj_capacitate_max' => 50,    // maximul se atinge la 20 kWh
     ),
     'baterii' => array(
         array(

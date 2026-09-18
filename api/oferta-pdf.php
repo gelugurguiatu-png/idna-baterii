@@ -102,17 +102,16 @@ class OfertaPDF extends tFPDF
 // =====================================================================
 function oferta_pdf_genereaza($in, $catalog, $nr_text)
 {
-    $TVA = 0.21; // cota TVA (ca in oferta model)
-
     $nume = isset($in['nume']) ? trim($in['nume']) : '';
     $judet = isset($in['judet']) ? trim($in['judet']) : '';
     $localitate = isset($in['localitate']) ? trim($in['localitate']) : '';
-    $putere_pv = isset($in['putere_pv']) ? floatval($in['putere_pv']) : 0;
+    $invertor_model = isset($in['invertor_model']) ? trim($in['invertor_model']) : '';
     $invertor_tip = isset($in['invertor_tip']) ? $in['invertor_tip'] : '';
+    $retea = isset($in['retea']) ? $in['retea'] : '';
     $contributie_extra = isset($in['contributie_extra']) ? max(0, floatval($in['contributie_extra'])) : 0;
     $baterie_id = isset($in['baterie_id']) ? $in['baterie_id'] : '';
 
-    if ($nume === '' || $baterie_id === '' || $putere_pv <= 0) {
+    if ($nume === '' || $baterie_id === '') {
         return array('eroare' => 'lipsesc date obligatorii');
     }
 
@@ -124,7 +123,9 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
         return array('eroare' => 'baterie inexistenta');
     }
 
-    // ---------- calcule (identice cu JS-ul din index.html) ----------
+    // ---------- calcule (identice cu JS-ul din index.html; Ordin 1904/2026 Art. 19) ----------
+    // punctaj contributie = 30 x (contributie proprie / finantare AFM), max 50
+    // punctaj capacitate  = kWh x 2,5, max 50
     $P = $catalog['program'];
     $F = $catalog['firma'];
 
@@ -134,20 +135,19 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $invertor_cost = ($invertor_tip === 'hibrid') ? 0 : floatval($b['pret_invertor_hibrid']);
     $total = $b['pret_baterie'] + $b['pret_montaj'] + $invertor_cost;
     $afm_baza = min($total * $P['procent_finantare'], $P['plafon_finantare'], $eligibile_plafonate);
-    $prag = ($P['punctaj_contrib_max'] + $P['punctaj_contrib_minus']) / $P['punctaj_contrib_coef'];
-    $extra_util_max = max(0, round($afm_baza - (1 - $prag) * $total));
+    // punctajul contributiei atinge maximul cand finantarea scade la total x coef/(coef+max)
+    $prag_afm = $total * $P['punctaj_contrib_coef'] / ($P['punctaj_contrib_coef'] + $P['punctaj_contrib_max']);
+    $extra_util_max = max(0, round($afm_baza - $prag_afm));
     $extra_aplicat = min($contributie_extra, $extra_util_max);
     $afm = max(0, $afm_baza - $extra_aplicat);
     $client = $total - $afm;
-    $procent = $client / $total;
-    $p_contrib = min(max($P['punctaj_contrib_coef'] * $procent - $P['punctaj_contrib_minus'], 0), $P['punctaj_contrib_max']);
-    $p_cap = min($b['capacitate_kwh'], $P['punctaj_capacitate_max']);
-    $p_pv = min($putere_pv, $P['punctaj_pv_max']);
-    $punctaj = $p_contrib + $p_cap + $p_pv;
+    $p_contrib = ($afm > 0) ? min($P['punctaj_contrib_coef'] * $client / $afm, $P['punctaj_contrib_max']) : $P['punctaj_contrib_max'];
+    $p_cap = min($b['capacitate_kwh'] * $P['punctaj_capacitate_coef'], $P['punctaj_capacitate_max']);
+    $punctaj = $p_contrib + $p_cap;
 
-    $total_fara_tva = $total / (1 + $TVA);
-    $val_tva = $total - $total_fara_tva;
-    $data_oferta = date('d.m.Y');
+    // etichete lizibile pentru datele declarate de client
+    $tip_txt = ($invertor_tip === 'hibrid') ? 'hibrid' : (($invertor_tip === 'clasic') ? 'clasic (on-grid)' : 'tip necunoscut');
+    $retea_txt = ($retea === 'mono') ? 'monofazată' : (($retea === 'tri') ? 'trifazată' : 'nedeclarată');
 
     $VERDE = array(22, 140, 60);
     $VERDE_INCHIS = array(13, 96, 41);
@@ -262,44 +262,45 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
         $nr++;
     }
 
+    // datele declarate de client la pasii aplicatiei
     $pdf->Ln(6);
     $pdf->SetX(12);
     $pdf->SetFillColor($GRI_DESCHIS[0], $GRI_DESCHIS[1], $GRI_DESCHIS[2]);
     $pdf->SetFont('DejaVu', 'B', 10.5);
-    $pdf->Cell(136, 11, 'Total general LEI fără TVA', 1, 0, 'L', true);
-    $pdf->Cell(50, 11, nr_ro($total_fara_tva), 1, 1, 'R', true);
-    $pdf->SetX(12);
-    $pdf->Cell(136, 11, 'Valoare TVA ' . nr_ro($TVA * 100) . '% (RON)', 1, 0, 'L', true);
-    $pdf->Cell(50, 11, nr_ro($val_tva), 1, 1, 'R', true);
-    $pdf->SetX(12);
-    $pdf->SetLineWidth(0.5);
-    $pdf->Cell(136, 11, 'Total general LEI cu TVA inclus', 1, 0, 'L', true);
-    $pdf->Cell(50, 11, nr_ro($total), 1, 1, 'R', true);
-    $pdf->SetLineWidth(0.2);
+    $pdf->SetTextColor(30, 30, 30);
+    $pdf->Cell(186, 9, 'Datele declarate de dumneavoastră', 1, 1, 'L', true);
+    $pdf->SetFont('DejaVu', '', 10);
+    $pdf->SetTextColor(60, 60, 60);
+    $declarate = array(
+        array('Invertorul dumneavoastră', trim($invertor_model) !== '' ? $invertor_model . ' (' . $tip_txt . ')' : $tip_txt),
+        array('Racordarea la rețea', $retea_txt),
+        array('Locul de implementare', trim($localitate . ($judet !== '' ? ', jud. ' . $judet : ''), ', ')),
+    );
+    foreach ($declarate as $r) {
+        $pdf->SetX(12);
+        $pdf->Cell(70, 9, $r[0], 1, 0, 'L');
+        $pdf->Cell(116, 9, $r[1], 1, 1, 'L');
+    }
 
+    // contributia proprie (singura valoare in lei - se declara la inscrierea AFM)
     $pdf->Ln(8);
     $yA = $pdf->GetY();
     $pdf->SetFillColor($VERDE[0], $VERDE[1], $VERDE[2]);
-    $pdf->RoundedRect(12, $yA, 186, 46, 4, 'F');
+    $pdf->RoundedRect(12, $yA, 186, 34, 4, 'F');
     $pdf->SetTextColor(255, 255, 255);
     $pdf->SetFont('DejaVu', 'B', 12);
     $pdf->SetXY(18, $yA + 5);
     $pdf->Cell(174, 7, 'Finanțare prin Programul AFM 2026', 0, 1);
-    $pdf->SetFont('DejaVu', '', 11);
-    $pdf->SetXY(18, $yA + 14);
-    $pdf->Cell(120, 7, 'Finanțare acordată de AFM (' . nr_ro((1 - $procent) * 100, 1) . '% din valoarea totală)', 0, 0);
-    $pdf->SetFont('DejaVu', 'B', 12);
-    $pdf->Cell(54, 7, '-' . nr_ro($afm, 0) . ' lei', 0, 1, 'R');
     $pdf->SetFont('DejaVu', 'B', 13);
-    $pdf->SetXY(18, $yA + 26);
-    $pdf->Cell(120, 8, 'CONTRIBUȚIA DUMNEAVOASTRĂ (' . nr_ro($procent * 100, 1) . '%)', 0, 0);
+    $pdf->SetXY(18, $yA + 14);
+    $pdf->Cell(120, 8, 'CONTRIBUȚIA DUMNEAVOASTRĂ PROPRIE', 0, 0);
     $pdf->SetFont('DejaVu', 'B', 15);
     $pdf->Cell(54, 8, nr_ro($client, 0) . ' lei', 0, 1, 'R');
     $pdf->SetFont('DejaVu', '', 8.5);
-    $pdf->SetXY(18, $yA + 37);
-    $pdf->Cell(174, 5, 'Finanțarea AFM se evidențiază pe factură și se încasează de instalator direct de la AFM - dvs. plătiți doar contribuția proprie.', 0, 1);
+    $pdf->SetXY(18, $yA + 25);
+    $pdf->MultiCell(174, 4.5, 'Aceasta este valoarea pe care o declarați în cererea de finanțare AFM la înscriere.', 0, 'L');
 
-    $yP = $yA + 52;
+    $yP = $yA + 40;
     $pdf->SetDrawColor($VERDE[0], $VERDE[1], $VERDE[2]);
     $pdf->SetLineWidth(0.6);
     $pdf->RoundedRect(12, $yP, 186, 34, 4, 'D');
@@ -314,16 +315,16 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $pdf->SetFont('DejaVu', '', 9);
     $pdf->SetXY(18, $yP + 14);
     // MultiCell: daca textul e prea lat, se imparte pe doua randuri in loc sa iasa din chenar
-    $pdf->MultiCell(174, 5, 'Contribuție: ' . nr_ro($p_contrib, 1) . ' pct (max 40)  ·  Capacitate: ' . nr_ro($p_cap, 1) . ' pct (max 40)  ·  Putere PV: ' . nr_ro($p_pv, 1) . ' pct (max 20)', 0, 'L');
+    $pdf->MultiCell(174, 5, 'Contribuție proprie: ' . nr_ro($p_contrib, 1) . ' pct (max 50)  ·  Capacitate stocare: ' . nr_ro($p_cap, 1) . ' pct (max 50)', 0, 'L');
     $yNota = max($pdf->GetY() + 1, $yP + 21);
     $pdf->SetXY(18, $yNota);
     $pdf->SetFont('DejaVu', '', 8.5);
-    $pdf->MultiCell(174, 4.5, 'Proiectele se finanțează în ordinea descrescătoare a punctajului, în limita bugetului sesiunii. Punctajul final se calculează de aplicația AFM pe baza datelor declarate la înscriere.', 0, 'L');
+    $pdf->MultiCell(174, 4.5, 'Proiectele se finanțează în ordinea descrescătoare a punctajului, în limita bugetului sesiunii. Punctajul final se calculează de aplicația AFM pe baza datelor declarate la înscriere (Ordin 1904/2026, Art. 19).', 0, 'L');
 
     $pdf->SetTextColor(130, 130, 130);
     $pdf->SetFont('DejaVu', '', 8);
     $pdf->SetXY(12, 280);
-    $pdf->Cell(186, 5, 'Ofertă informativă valabilă 30 de zile de la emitere. Prețurile includ TVA. Nu reprezintă un angajament de finanțare din partea AFM.', 0, 0, 'C');
+    $pdf->Cell(186, 5, 'Ofertă informativă valabilă 30 de zile de la emitere. Nu reprezintă un angajament de finanțare din partea AFM.', 0, 0, 'C');
 
     // ================= PAGINA 3 - DATE INSCRIERE AFM =================
     $pdf->AddPage();
@@ -338,16 +339,13 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $pdf->SetTextColor(90, 90, 90);
     $pdf->SetFont('DejaVu', '', 9.5);
     $pdf->SetX(12);
-    $pdf->Cell(186, 6, 'Valorile de mai jos se completează în aplicația AFM la înscriere (secțiunile B și C din cererea de finanțare):', 0, 1, 'C');
+    $pdf->Cell(186, 6, 'Valorile pe care le declarați în aplicația AFM la înscriere (capacitatea sistemului și valoarea contribuției proprii):', 0, 1, 'C');
 
     $pdf->Ln(4);
     $date_afm = array(
         array('Capacitatea sistemului de stocare', nr_ro($b['capacitate_kwh'], 1) . ' kWh'),
-        array('Puterea instalată a sistemului fotovoltaic', nr_ro($putere_pv, 1) . ' kW'),
-        array('Procentul contribuției proprii', nr_ro($procent * 100, 1) . ' %'),
-        array('Valoarea totală a proiectului', nr_ro($total, 0) . ' lei'),
-        array('Contribuție proprie', nr_ro($client, 0) . ' lei'),
-        array('Finanțare solicitată de la AFM', nr_ro($afm, 0) . ' lei'),
+        array('Valoarea contribuției proprii', nr_ro($client, 0) . ' lei'),
+        array('Punctaj estimat', nr_ro($punctaj, 1) . ' / 100'),
     );
     $pdf->SetDrawColor(180, 180, 180);
     foreach ($date_afm as $i => $r) {
@@ -375,7 +373,7 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
         'Certificat fiscal de la primăria locului de montaj - doar dacă diferă de domiciliu',
         'Contractul de prosumator (de la furnizorul de energie)',
         'Certificatul de racordare (de la operatorul de rețea)',
-        'Factură de energie electrică recentă (max. 3 luni vechime)',
+        'Factură de energie electrică recentă (max. 6 luni vechime)',
     );
     foreach ($documente as $doc) {
         $pdf->SetX(16);

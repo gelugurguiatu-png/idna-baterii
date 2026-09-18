@@ -148,11 +148,9 @@ if ($baterie_id !== '' && $baterie_id !== 'personalizat') {
                     'email' => $email,
                     'judet' => isset($date['judet']) ? $date['judet'] : '',
                     'localitate' => isset($date['localitate']) ? $date['localitate'] : '',
-                    'putere_pv' => isset($date['putere_pv']) ? floatval($date['putere_pv']) : '',
                     'invertor_model' => isset($date['invertor_model']) ? trim($date['invertor_model']) : '',
                     'invertor_tip' => isset($date['invertor_tip']) ? $date['invertor_tip'] : '',
                     'retea' => isset($date['retea']) ? $date['retea'] : '',
-                    'consum_lunar' => isset($date['consum_lunar']) && $date['consum_lunar'] !== null ? floatval($date['consum_lunar']) : '',
                     'baterie_id' => $baterie_id,
                     'baterie' => $rezultat['meta']['baterie'],
                     'capacitate_kwh' => $rezultat['meta']['capacitate_kwh'],
@@ -182,9 +180,8 @@ if ($baterie_id !== '' && $baterie_id !== 'personalizat') {
                     . "Va multumim pentru interesul acordat! Atasat gasiti oferta dvs. nr. " . $nrText
                     . " pentru " . $rezultat['meta']['baterie'] . ".\n\n"
                     . "Pe scurt:\n"
-                    . "  - Valoare totala proiect: " . nr_ro($rezultat['meta']['valoare_totala'], 0) . " lei (TVA inclusa)\n"
-                    . "  - Finantare AFM: " . nr_ro($rezultat['meta']['finantare_afm'], 0) . " lei\n"
-                    . "  - Contributia dvs.: " . nr_ro($rezultat['meta']['contributie_client'], 0) . " lei\n"
+                    . "  - Capacitate sistem de stocare: " . nr_ro($rezultat['meta']['capacitate_kwh'], 1) . " kWh\n"
+                    . "  - Contributia dvs. proprie: " . nr_ro($rezultat['meta']['contributie_client'], 0) . " lei\n"
                     . "  - Punctaj estimat: " . nr_ro($rezultat['meta']['punctaj'], 1) . " / 100\n\n"
                     . "In paginile ofertei aveti si datele exacte pentru inscrierea in programul AFM, documentele necesare si pasii urmatori.\n\n"
                     . "Va contactam in cel mai scurt timp. Pentru orice intrebare: " . $EMAIL_NOTIFICARE . "\n\n"

@@ -46,7 +46,7 @@
   <div class="max-w-5xl mx-auto px-4 pt-10 text-center relative">
     <span class="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-wide bg-amber-300/15 text-amber-300 border border-amber-300/40">PROGRAM AFM 2026 · FONDURI LIMITATE</span>
     <h1 class="mt-5 text-3xl md:text-4xl font-extrabold leading-tight">Statul îți plătește până la <span class="text-amber-300">15.000 lei</span><br class="hidden md:block"> din bateria casei tale</h1>
-    <p class="mt-4 text-emerald-100 max-w-2xl mx-auto">Ești prosumator? Află în 2 minute <b>ce baterie ți se potrivește, cât plătești tu și ce șanse ai la finanțare</b> — fără drumuri, fără telefoane.</p>
+    <p class="mt-4 text-emerald-100 max-w-2xl mx-auto">Ești prosumator? Află în 2 minute <b>ce baterie ți se potrivește și ce punctaj obții la finanțare</b> — fără drumuri, fără telefoane.</p>
     <a href="#formular" class="inline-block mt-6 px-9 py-3.5 rounded-xl font-extrabold text-[#064e3b] bg-amber-300 hover:bg-amber-200 shadow-lg shadow-amber-300/30">Calculează-ți punctajul gratuit →</a>
     <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-6 text-sm text-emerald-200">
       <span>✓ Instalator atestat ANRE</span>
@@ -84,7 +84,7 @@
     </div>
 
     <div>
-      <label class="font-medium">Ai deja un sistem de stocare (baterie) instalat la această adresă?</label>
+      <label class="font-medium">Ai deja un sistem de stocare (baterie) instalat la această adresă printr-o altă finanțare?</label>
       <div class="flex gap-3 mt-2">
         <button @click="f.are_baterie='da'" :class="btn(f.are_baterie==='da')">Da</button>
         <button @click="f.are_baterie='nu'" :class="btn(f.are_baterie==='nu')">Nu</button>
@@ -113,7 +113,7 @@
       <b>Din păcate, nu ești eligibil în acest moment.</b>
       <ul class="list-disc ml-5 mt-1">
         <li x-show="f.prosumator==='nu'">Programul e doar pentru prosumatori. Dacă ai sistem fotovoltaic dar nu ești încă prosumator, te putem ajuta cu racordarea — sună-ne.</li>
-        <li x-show="f.are_baterie==='da'">Nu poți primi finanțare dacă ai deja un sistem de stocare la adresă (Art. 15).</li>
+        <li x-show="f.are_baterie==='da'">Nu poți primi finanțare pentru cheltuieli care au mai beneficiat de o finanțare publică — dubla finanțare nu e permisă (Art. 15).</li>
         <li x-show="f.activitati==='da'">La adresă nu trebuie să existe activități economice, decât cu contorizare separată (Art. 15).</li>
         <li x-show="f.datorii==='da'">Datoriile la buget trebuie achitate înainte de înscriere (Art. 15). După achitare, revino!</li>
       </ul>
@@ -126,12 +126,6 @@
   <!-- PASUL 2: SISTEMUL PV -->
   <section x-show="pas === 2" class="bg-white rounded-xl shadow p-6 space-y-5">
     <h2 class="text-lg font-bold">Pasul 2 · Sistemul tău fotovoltaic</h2>
-
-    <div>
-      <label class="font-medium">Puterea instalată a sistemului fotovoltaic (kW)</label>
-      <p class="text-xs text-slate-500">O găsești pe certificatul de racordare sau pe factura instalatorului. Contează la punctaj (max 20 puncte).</p>
-      <input type="number" step="0.1" min="0.1" max="100" x-model.number="f.putere_pv" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: 5.5">
-    </div>
 
     <div>
       <label class="font-medium">Marca invertorului tău</label>
@@ -166,12 +160,6 @@
         <button @click="f.retea='tri'" :class="btn(f.retea==='tri')">Trifazat</button>
         <button @click="f.retea='nustiu'" :class="btn(f.retea==='nustiu')">Nu știu</button>
       </div>
-    </div>
-
-    <div>
-      <label class="font-medium">Consumul mediu lunar (kWh) <span class="text-slate-400 text-sm">— opțional</span></label>
-      <p class="text-xs text-slate-500">Îl găsești pe factura de energie. Ne ajută să-ți recomandăm capacitatea potrivită.</p>
-      <input type="number" min="0" x-model.number="f.consum_lunar" class="mt-2 w-full border rounded-lg p-3" placeholder="ex: 350">
     </div>
 
     <div class="flex gap-3">
@@ -226,11 +214,11 @@
   <section x-show="pas === 4 && !trimis" class="space-y-5 pb-28">
     <div class="bg-white rounded-xl shadow p-6">
       <h2 class="text-lg font-bold">Pasul 4 · Alege bateria potrivită</h2>
-      <p class="text-sm text-slate-500 mt-1">Pentru fiecare baterie vezi exact: cât finanțează AFM, cât plătești tu și ce punctaj obții. Proiectele se aprobă în ordinea punctajului, în limita bugetului AFM.</p>
+      <p class="text-sm text-slate-500 mt-1">Îți afișăm doar bateriile compatibile cu invertorul tău, cu punctajul pe care îl obții cu fiecare. Proiectele se aprobă în ordinea punctajului, în limita bugetului AFM.</p>
 
-      <!-- slider + caseta contributie suplimentara (sincronizate, plafonate la maximul util) -->
+      <!-- bara + caseta aport propriu (sincronizate, plafonate la maximul util) -->
       <div class="mt-4 bg-slate-50 rounded-lg p-4" x-show="sliderMax() > 0">
-        <label class="font-medium text-sm">Vrei punctaj mai mare? Mărește-ți contribuția proprie <span class="text-slate-400">(opțional)</span></label>
+        <label class="font-medium text-sm">Aport propriu — crește-ți punctajul și șansele la finanțare <span class="text-slate-400">(opțional)</span></label>
         <div class="flex items-center gap-4 mt-2">
           <input type="range" min="0" :max="sliderMax()" step="500" x-model.number="f.contributie_extra" class="flex-1">
           <div class="flex items-center gap-1">
@@ -242,10 +230,10 @@
         </div>
         <div class="flex justify-between text-xs text-slate-500 mt-1">
           <span>+0 lei</span>
-          <span class="font-bold text-slate-700" x-text="'+' + lei(f.contributie_extra) + ' contribuție suplimentară'"></span>
+          <span class="font-bold text-slate-700" x-text="'+' + lei(f.contributie_extra) + ' aport propriu'"></span>
           <span x-text="'+' + lei(sliderMax())"></span>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Fiecare leu în plus la contribuție scade finanțarea AFM, dar crește punctajul (regula AFM: punctaj contribuție = 80 × procent − 10, max 40 pct). Bara e limitată automat la suma peste care punctajul nu mai crește la nicio baterie.</p>
+        <p class="text-xs text-slate-500 mt-1">Fiecare leu de aport îți crește punctajul (regula AFM: punctaj contribuție = 30 × contribuția proprie ÷ finanțarea AFM, max 50 pct). Bara e limitată automat la suma peste care punctajul nu mai crește la nicio baterie.</p>
       </div>
     </div>
 
@@ -272,44 +260,26 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-center">
+        <div class="grid grid-cols-2 gap-3 mt-4 text-center">
           <div class="bg-slate-50 rounded-lg p-3">
-            <div class="text-xs text-slate-500">Preț total proiect</div>
-            <div class="font-bold" x-text="lei(calc(b).total)"></div>
-            <div class="text-[11px] text-slate-400" x-show="calc(b).invertor_cost > 0" x-text="'include invertor hibrid ' + lei(calc(b).invertor_cost)"></div>
+            <div class="text-xs text-slate-500">Punctaj contribuție proprie</div>
+            <div class="font-bold text-lg" x-text="calc(b).p_contrib.toFixed(1) + ' / 50'"></div>
           </div>
           <div class="bg-emerald-50 rounded-lg p-3">
-            <div class="text-xs text-emerald-700">Plătește AFM</div>
-            <div class="font-bold text-emerald-700" x-text="lei(calc(b).afm)"></div>
-          </div>
-          <div class="bg-slate-50 rounded-lg p-3">
-            <div class="text-xs text-slate-500">Plătești tu</div>
-            <div class="font-bold" x-text="lei(calc(b).client)"></div>
-            <div class="text-[11px] text-slate-400" x-text="(calc(b).procent*100).toFixed(1) + '% contribuție'"></div>
-          </div>
-          <div class="bg-slate-50 rounded-lg p-3">
-            <div class="text-xs text-slate-500">Punctaj detaliat</div>
-            <div class="text-[11px] text-slate-600 leading-relaxed">
-              contribuție: <b x-text="calc(b).p_contrib.toFixed(1)"></b><br>
-              capacitate: <b x-text="calc(b).p_cap.toFixed(0)"></b> ·
-              PV: <b x-text="calc(b).p_pv.toFixed(1)"></b>
-            </div>
+            <div class="text-xs text-emerald-700">Punctaj capacitate stocare</div>
+            <div class="font-bold text-lg text-emerald-700" x-text="calc(b).p_cap.toFixed(1) + ' / 50'"></div>
           </div>
         </div>
 
         <div class="mt-3 text-xs text-amber-600" x-show="f.contributie_extra > calc(b).extra_util_max">
-          La această baterie se aplică doar <b x-text="'+' + lei(calc(b).extra_aplicat)"></b> din contribuția suplimentară — punctajul contribuției e deja la maximul de 40 pct, restul banilor nu ar mai aduce puncte.
+          La această baterie se aplică doar <b x-text="'+' + lei(calc(b).extra_aplicat)"></b> din aportul propriu — punctajul contribuției e deja la maximul de 50 pct, restul banilor nu ar mai aduce puncte.
         </div>
 
         <!-- potentialul de punctaj: cat poate urca daca isi creste contributia -->
         <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800 flex items-center justify-between gap-3"
           x-show="punctajMaxim(b) - calc(b).punctaj_total > 0.05">
-          <span>Cu această baterie poți urca la <b x-text="punctajMaxim(b).toFixed(1) + ' pct'"></b> mărindu-ți contribuția cu <b x-text="'+' + lei(calc(b).extra_util_max - calc(b).extra_aplicat)"></b>.</span>
+          <span>Cu această baterie poți urca la <b x-text="punctajMaxim(b).toFixed(1) + ' pct'"></b> mărindu-ți aportul propriu cu <b x-text="'+' + lei(calc(b).extra_util_max - calc(b).extra_aplicat)"></b>.</span>
           <button @click="f.contributie_extra = calc(b).extra_util_max" class="shrink-0 border border-amber-500 text-amber-800 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-100">Aplică</button>
-        </div>
-
-        <div class="mt-3 text-xs text-slate-500" x-show="f.consum_lunar > 0">
-          Autonomie estimată: <b x-text="autonomie(b)"></b> la consumul tău mediu.
         </div>
 
         <button @click="alege(b)" class="mt-4 w-full py-3 rounded-lg font-bold"
@@ -348,14 +318,11 @@
     <template x-if="bateriaAleasa()">
     <div class="bg-white rounded-xl shadow p-6">
       <h3 class="font-bold text-lg">Datele tale pentru cererea de finanțare AFM</h3>
-      <p class="text-xs text-slate-500 mb-3">Exact valorile pe care le vei completa în aplicația AFM (secțiunile B și C din cererea de finanțare):</p>
+      <p class="text-xs text-slate-500 mb-3">Exact valorile pe care le declari în aplicația AFM la înscriere (capacitatea sistemului și valoarea contribuției proprii):</p>
       <table class="w-full text-sm">
         <tbody>
           <tr class="border-b"><td class="py-2 text-slate-500">Capacitatea sistemului de stocare</td><td class="py-2 font-bold text-right" x-text="bateriaAleasa().capacitate_kwh + ' kWh'"></td></tr>
-          <tr class="border-b"><td class="py-2 text-slate-500">Puterea instalată a sistemului PV</td><td class="py-2 font-bold text-right" x-text="f.putere_pv + ' kW'"></td></tr>
-          <tr class="border-b"><td class="py-2 text-slate-500">Valoarea totală a proiectului</td><td class="py-2 font-bold text-right" x-text="lei(calc(bateriaAleasa()).total)"></td></tr>
-          <tr class="border-b"><td class="py-2 text-slate-500">Contribuția proprie</td><td class="py-2 font-bold text-right" x-text="lei(calc(bateriaAleasa()).client) + ' (' + (calc(bateriaAleasa()).procent*100).toFixed(1) + '%)'"></td></tr>
-          <tr class="border-b"><td class="py-2 text-slate-500">Finanțare solicitată de la AFM</td><td class="py-2 font-bold text-right text-emerald-600" x-text="lei(calc(bateriaAleasa()).afm)"></td></tr>
+          <tr class="border-b"><td class="py-2 text-slate-500">Valoarea contribuției proprii</td><td class="py-2 font-bold text-right" x-text="lei(calc(bateriaAleasa()).client)"></td></tr>
           <tr><td class="py-2 text-slate-500">Punctaj estimat</td><td class="py-2 font-bold text-right" x-text="calc(bateriaAleasa()).punctaj_total.toFixed(1) + ' / 100'"></td></tr>
         </tbody>
       </table>
@@ -372,7 +339,7 @@
         <li class="flex gap-2"><span>📄</span><span><b>Certificat fiscal de la primăria locului de montaj</b> — doar dacă e diferit de domiciliu</span></li>
         <li class="flex gap-2"><span>📄</span><span><b>Contractul de prosumator</b> — de la furnizorul de energie</span></li>
         <li class="flex gap-2"><span>📄</span><span><b>Certificatul de racordare</b> — de la operatorul de rețea</span></li>
-        <li class="flex gap-2"><span>📄</span><span><b>O factură de energie recentă</b> — maximum 3 luni vechime</span></li>
+        <li class="flex gap-2"><span>📄</span><span><b>O factură de energie recentă</b> — maximum 6 luni vechime</span></li>
       </ul>
       <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-xs mt-4">
         <b>Important:</b> documentele emise electronic (PDF de la ANAF etc.) se încarcă în aplicația AFM exact în formatul primit — NU scanate sau fotografiate. Odată trimise, nu mai pot fi modificate.
@@ -424,7 +391,7 @@ function calculator() {
     // catalog gol pana la incarcarea de pe server (init) - evita erori de binding
     C: {
       firma: { nume: 'iDNA Power', telefon: '', email: '', atestat_anre: '', judete: [] },
-      program: { procent_finantare: 0.75, plafon_finantare: 15000, standard_cost: 1250, capacitate_minima: 12, contributie_minima: 0.25, punctaj_contrib_coef: 80, punctaj_contrib_minus: 10, punctaj_contrib_max: 40, punctaj_capacitate_max: 40, punctaj_pv_max: 20 },
+      program: { procent_finantare: 0.75, plafon_finantare: 15000, standard_cost: 1500, capacitate_minima: 10, cicluri_minime: 5000, contributie_minima: 0.25, punctaj_contrib_coef: 30, punctaj_contrib_max: 50, punctaj_capacitate_coef: 2.5, punctaj_capacitate_max: 50 },
       baterii: []
     },
     catalogIncarcat: false,
@@ -450,7 +417,7 @@ function calculator() {
     marciInvertoare: ['Fronius', 'Huawei', 'Deye', 'Growatt', 'SolaX', 'Solis', 'GoodWe', 'Sungrow', 'Sigenergy', 'Victron'],
     f: {
       prosumator: '', are_baterie: '', activitati: '', datorii: '',
-      putere_pv: null, invertor_marca: '', invertor_model: '', invertor_tip: '', retea: '', consum_lunar: null,
+      invertor_marca: '', invertor_model: '', invertor_tip: '', retea: '',
       nume: '', telefon: '', email: '', judet: '', localitate: '', gdpr: false,
       contributie_extra: 0, baterie_id: ''
     },
@@ -471,7 +438,7 @@ function calculator() {
         && this.f.datorii === 'nu';
     },
     pas2Valid() {
-      return this.f.putere_pv > 0 && this.f.invertor_marca && this.f.invertor_tip && this.f.retea;
+      return this.f.invertor_marca && this.f.invertor_tip && this.f.retea;
     },
     pas3Valid() {
       return this.f.nume.trim().length >= 3
@@ -487,6 +454,8 @@ function calculator() {
       return this.C.baterii.filter(b => {
         if (!b.activ || b.stoc <= 0) return false;
         if (b.capacitate_kwh < P.capacitate_minima) return false;
+        // ghidul final cere minimum 5.000 cicluri - sub prag bateria e neeligibila
+        if ((b.cicluri || 0) < (P.cicluri_minime || 0)) return false;
         // filtru retea: "nustiu" vede tot
         if (this.f.retea === 'mono' && b.retea === 'tri') return false;
         if (this.f.retea === 'tri' && b.retea === 'mono') return false;
@@ -502,11 +471,10 @@ function calculator() {
       .sort((a, b) => this.punctajMaxim(b) - this.punctajMaxim(a) || this.calc(a).total - this.calc(b).total);
     },
 
-    // punctajul maxim atingibil cu o baterie: capacitate + PV + contributia la plafon (40)
+    // punctajul maxim atingibil cu o baterie: capacitate + contributia la plafon (50)
     punctajMaxim(b) {
       const P = this.C.program;
-      return Math.min(b.capacitate_kwh, P.punctaj_capacitate_max)
-        + Math.min(this.f.putere_pv || 0, P.punctaj_pv_max)
+      return Math.min(b.capacitate_kwh * P.punctaj_capacitate_coef, P.punctaj_capacitate_max)
         + P.punctaj_contrib_max;
     },
 
@@ -520,7 +488,9 @@ function calculator() {
       return 'orice invertor (sistem cu invertor propriu inclus)';
     },
 
-    // calculul financiar + punctaj pentru o baterie
+    // calculul financiar + punctaj pentru o baterie (Ordin 1904/2026, Art. 19)
+    // punctaj contributie = 30 x (contributie proprie / finantare AFM), max 50
+    // punctaj capacitate  = kWh x 2,5, max 50
     calc(b) {
       const P = this.C.program;
       const eligibile = b.pret_baterie + b.pret_montaj;
@@ -529,37 +499,27 @@ function calculator() {
       const invertor_cost = (this.f.invertor_tip === 'hibrid') ? 0 : b.pret_invertor_hibrid;
       const total = b.pret_baterie + b.pret_montaj + invertor_cost;
       const afm_baza = Math.min(total * P.procent_finantare, P.plafon_finantare, eligibile_plafonate);
-      // pragul de contributie la care punctajul contributiei atinge maximul (62,5%)
-      // peste el, banii in plus nu mai aduc puncte -> plafonam contributia extra aplicata
-      const prag = (P.punctaj_contrib_max + P.punctaj_contrib_minus) / P.punctaj_contrib_coef;
-      const extra_util_max = Math.max(0, Math.round(afm_baza - (1 - prag) * total));
+      // punctajul contributiei atinge maximul cand finantarea AFM scade la
+      // total x coef/(coef+max) = 37,5% din total; aportul peste acest prag nu mai aduce puncte
+      const prag_afm = total * P.punctaj_contrib_coef / (P.punctaj_contrib_coef + P.punctaj_contrib_max);
+      const extra_util_max = Math.max(0, Math.round(afm_baza - prag_afm));
       const extra_aplicat = Math.min(this.f.contributie_extra || 0, extra_util_max);
       const afm = Math.max(0, afm_baza - extra_aplicat);
       const client = total - afm;
-      const procent = client / total;
-      const p_contrib = Math.min(Math.max(P.punctaj_contrib_coef * procent - P.punctaj_contrib_minus, 0), P.punctaj_contrib_max);
-      const p_cap = Math.min(b.capacitate_kwh, P.punctaj_capacitate_max);
-      const p_pv = Math.min(this.f.putere_pv || 0, P.punctaj_pv_max);
-      return { eligibile, plafon_cost, invertor_cost, total, afm, client, procent, extra_util_max, extra_aplicat, p_contrib, p_cap, p_pv, punctaj_total: p_contrib + p_cap + p_pv };
+      const p_contrib = afm > 0 ? Math.min(P.punctaj_contrib_coef * client / afm, P.punctaj_contrib_max) : P.punctaj_contrib_max;
+      const p_cap = Math.min(b.capacitate_kwh * P.punctaj_capacitate_coef, P.punctaj_capacitate_max);
+      return { eligibile, plafon_cost, invertor_cost, total, afm, client, extra_util_max, extra_aplicat, p_contrib, p_cap, punctaj_total: p_contrib + p_cap };
     },
 
-    // maximul util al barei = cea mai mare contributie suplimentara care mai
-    // aduce punctaj la vreuna dintre bateriile afisate (rotunjit la 500)
+    // maximul util al barei = cel mai mare aport care mai aduce punctaj la vreuna
+    // dintre bateriile afisate (rotunjit la 500); plafon absolut 50.000 lei
     sliderMax() {
       let m = 0;
       for (const b of this.bateriiCompatibile()) {
         const e = this.calc(b).extra_util_max;
         if (e > m) m = e;
       }
-      return Math.ceil(m / 500) * 500;
-    },
-
-    autonomie(b) {
-      const consum_zi = this.f.consum_lunar / 30;
-      if (!consum_zi) return '-';
-      const ore = (b.capacitate_utila_kwh / consum_zi) * 24;
-      if (ore >= 24) return (ore / 24).toFixed(1) + ' zile';
-      return Math.round(ore) + ' ore';
+      return Math.min(50000, Math.ceil(m / 500) * 500);
     },
 
     bateriaAleasa() {
