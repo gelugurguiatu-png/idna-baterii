@@ -135,10 +135,12 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $invertor_cost = ($invertor_tip === 'hibrid') ? 0 : floatval($b['pret_invertor_hibrid']);
     $total = $b['pret_baterie'] + $b['pret_montaj'] + $invertor_cost;
     $afm_baza = min($total * $P['procent_finantare'], $P['plafon_finantare'], $eligibile_plafonate);
-    // punctajul contributiei atinge maximul cand finantarea scade la total x coef/(coef+max)
+    // punctajul contributiei atinge maximul cand finantarea scade la total x coef/(coef+max);
+    // aportul peste prag nu mai aduce puncte, dar conteaza la departajare (Art. 19 alin. 9),
+    // deci se aplica pana la renuntarea completa la finantare
     $prag_afm = $total * $P['punctaj_contrib_coef'] / ($P['punctaj_contrib_coef'] + $P['punctaj_contrib_max']);
     $extra_util_max = max(0, round($afm_baza - $prag_afm));
-    $extra_aplicat = min($contributie_extra, $extra_util_max);
+    $extra_aplicat = min($contributie_extra, round($afm_baza));
     $afm = max(0, $afm_baza - $extra_aplicat);
     $client = $total - $afm;
     $p_contrib = ($afm > 0) ? min($P['punctaj_contrib_coef'] * $client / $afm, $P['punctaj_contrib_max']) : $P['punctaj_contrib_max'];
@@ -303,7 +305,7 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $yP = $yA + 40;
     $pdf->SetDrawColor($VERDE[0], $VERDE[1], $VERDE[2]);
     $pdf->SetLineWidth(0.6);
-    $pdf->RoundedRect(12, $yP, 186, 34, 4, 'D');
+    $pdf->RoundedRect(12, $yP, 186, 39, 4, 'D');
     $pdf->SetLineWidth(0.2);
     $pdf->SetTextColor($VERDE_INCHIS[0], $VERDE_INCHIS[1], $VERDE_INCHIS[2]);
     $pdf->SetFont('DejaVu', 'B', 12);
@@ -319,7 +321,7 @@ function oferta_pdf_genereaza($in, $catalog, $nr_text)
     $yNota = max($pdf->GetY() + 1, $yP + 21);
     $pdf->SetXY(18, $yNota);
     $pdf->SetFont('DejaVu', '', 8.5);
-    $pdf->MultiCell(174, 4.5, 'Proiectele se finanțează în ordinea descrescătoare a punctajului, în limita bugetului sesiunii. Punctajul final se calculează de aplicația AFM pe baza datelor declarate la înscriere (Ordin 1904/2026, Art. 19).', 0, 'L');
+    $pdf->MultiCell(174, 4.5, 'Proiectele se finanțează în ordinea descrescătoare a punctajului, în limita bugetului sesiunii. La punctaje egale, departajarea se face după valoarea contribuției proprii, apoi capacitate, apoi ora înscrierii. Punctajul final se calculează de aplicația AFM (Ordin 1904/2026, Art. 19).', 0, 'L');
 
     $pdf->SetTextColor(130, 130, 130);
     $pdf->SetFont('DejaVu', '', 8);

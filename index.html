@@ -215,7 +215,7 @@
     <div class="bg-white rounded-xl shadow p-6">
       <h2 class="text-lg font-bold">Pasul 4 · Alege bateria potrivită</h2>
       <p class="text-sm text-slate-500 mt-1">Îți afișăm doar bateriile compatibile cu invertorul tău, cu punctajul pe care îl obții cu fiecare. Proiectele se aprobă în ordinea punctajului, în limita bugetului AFM.</p>
-      <p class="text-xs text-slate-500 mt-2" x-show="sliderMax() > 0">Fiecare leu de aport propriu îți crește punctajul (regula AFM: punctaj contribuție = 30 × contribuția proprie ÷ finanțarea AFM, max 50 pct). Bara de aport rămâne vizibilă sus cât derulezi lista, iar bateriile „se încarcă" pe măsură ce crești aportul — verde plin = punctaj maxim.</p>
+      <p class="text-xs text-slate-500 mt-2" x-show="sliderMax() > 0">Aportul propriu te ajută de două ori: până la un prag îți <b>crește punctajul</b> (regula AFM: punctaj contribuție = 30 × contribuția proprie ÷ finanțarea AFM, max 50 pct), iar peste prag te avantajează la <b>departajare</b> — la punctaje egale, AFM finanțează întâi proiectele cu contribuția proprie mai mare (Art. 19). Bara rămâne vizibilă sus cât derulezi lista, iar bateriile „se încarcă" pe măsură ce crești aportul.</p>
     </div>
 
     <!-- bara aport propriu LIPICIOASA: ramane sus pe ecran cat derulezi cardurile -->
@@ -283,7 +283,9 @@
         </div>
 
         <div class="mt-3 text-xs text-amber-600" x-show="f.contributie_extra > calc(b).extra_util_max">
-          La această baterie se aplică doar <b x-text="'+' + lei(calc(b).extra_aplicat)"></b> din aportul propriu — punctajul contribuției e deja la maximul de 50 pct, restul banilor nu ar mai aduce puncte.
+          Din aportul tău, la această baterie: <b x-text="'+' + lei(Math.min(calc(b).extra_aplicat, calc(b).extra_util_max))"></b> cresc punctajul, iar
+          <b x-text="'+' + lei(Math.max(0, calc(b).extra_aplicat - calc(b).extra_util_max))"></b> nu mai aduc puncte — dar te avantajează la <b>departajare</b>:
+          la punctaje egale, câștigă cel cu contribuția proprie mai mare (Art. 19).
         </div>
 
         <!-- potentialul de punctaj: cat poate urca daca isi creste contributia -->
@@ -511,26 +513,40 @@ function calculator() {
       const total = b.pret_baterie + b.pret_montaj + invertor_cost;
       const afm_baza = Math.min(total * P.procent_finantare, P.plafon_finantare, eligibile_plafonate);
       // punctajul contributiei atinge maximul cand finantarea AFM scade la
-      // total x coef/(coef+max) = 37,5% din total; aportul peste acest prag nu mai aduce puncte
+      // total x coef/(coef+max) = 37,5% din total; aportul peste acest prag nu mai
+      // aduce PUNCTE, dar conteaza la DEPARTAJARE (Art. 19 alin. 9: la punctaje
+      // egale castiga contributia proprie mai mare) - de aceea aportul se aplica
+      // pana la renuntarea completa la finantare
       const prag_afm = total * P.punctaj_contrib_coef / (P.punctaj_contrib_coef + P.punctaj_contrib_max);
       const extra_util_max = Math.max(0, Math.round(afm_baza - prag_afm));
-      const extra_aplicat = Math.min(this.f.contributie_extra || 0, extra_util_max);
+      const extra_aplicat = Math.min(this.f.contributie_extra || 0, Math.round(afm_baza));
       const afm = Math.max(0, afm_baza - extra_aplicat);
       const client = total - afm;
       const p_contrib = afm > 0 ? Math.min(P.punctaj_contrib_coef * client / afm, P.punctaj_contrib_max) : P.punctaj_contrib_max;
       const p_cap = Math.min(b.capacitate_kwh * P.punctaj_capacitate_coef, P.punctaj_capacitate_max);
-      return { eligibile, plafon_cost, invertor_cost, total, afm, client, extra_util_max, extra_aplicat, p_contrib, p_cap, punctaj_total: p_contrib + p_cap };
+      return { eligibile, plafon_cost, invertor_cost, total, afm_baza, afm, client, extra_util_max, extra_aplicat, p_contrib, p_cap, punctaj_total: p_contrib + p_cap };
     },
 
-    // maximul util al barei = cel mai mare aport care mai aduce punctaj la vreuna
-    // dintre bateriile afisate (rotunjit la 500); plafon absolut 50.000 lei
+    // maximul barei = cea mai mare finantare AFM dintre bateriile afisate
+    // (aportul poate merge pana la renuntarea completa la finantare - conteaza
+    // la departajare chiar si dupa atingerea punctajului maxim)
     sliderMax() {
+      let m = 0;
+      for (const b of this.bateriiCompatibile()) {
+        const a = this.calc(b).afm_baza;
+        if (a > m) m = a;
+      }
+      return Math.min(50000, Math.ceil(m / 500) * 500);
+    },
+
+    // pragul de la care aportul nu mai aduce puncte la nicio baterie (doar departajare)
+    pragPunctajMax() {
       let m = 0;
       for (const b of this.bateriiCompatibile()) {
         const e = this.calc(b).extra_util_max;
         if (e > m) m = e;
       }
-      return Math.min(50000, Math.ceil(m / 500) * 500);
+      return m;
     },
 
     bateriaAleasa() {
